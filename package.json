@@ -6,21 +6,39 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:migrate": "prisma migrate dev",
     "lint": "next lint"
   },
   "dependencies": {
+    "@prisma/client": "^5.12.1",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@vercel/analytics": "^1.2.2",
+    "@vercel/postgres": "^0.8.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "embla-carousel-react": "^8.0.2",
+    "install": "^0.13.0",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "lucide-react": "^0.372.0",
+    "next": "14.2.2",
+    "next-mdx-remote": "^4.4.1",
+    "next-themes": "^0.3.0",
+    "prisma": "^5.12.1",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.2"
+    "tailwind-merge": "^2.3.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/lodash": "^4.17.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.2"
+    "typescript": "^5"
   }
 }
