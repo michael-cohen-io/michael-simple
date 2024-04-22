@@ -1,9 +1,10 @@
 import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
 import prisma from "@/lib/prisma";
-import { WorkTimeline } from "./WorkTimeline";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CompanyWithInfo } from "@/lib/types";
+import { WorkAccordion } from "./WorkAccordion";
+import { H1 } from "../typography/heading";
 
 async function fetchWorkData(): Promise<CompanyWithInfo[]> {
   const companies = await prisma.company.findMany({
@@ -64,7 +65,7 @@ export default async function Work() {
     );
   return (
     <div className="flex flex-col w-full gap-2">
-      <h1 className="font-semibold underline">Work Experience</h1>
+      <H1>Work Experience</H1>
       <div className="text-sm font-light">
         are you oldschool? read on at{" "}
         <Button variant="ghost" size="sm" className="px-0 md:p-2" asChild>
@@ -73,7 +74,7 @@ export default async function Work() {
           </Link>
         </Button>
       </div>
-      <WorkTimeline
+      <WorkAccordion
         companies={companies}
         workItemDescriptionComponentMap={workItemDescriptionComponentMap}
       />

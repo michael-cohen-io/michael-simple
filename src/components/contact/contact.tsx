@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { H1 } from "../typography/heading";
 
 type ContactItem = {
   name: string;
@@ -34,14 +35,17 @@ const contactItems: ContactItem[] = [
 export default function Contact() {
   return (
     <div className="flex flex-col w-full gap-2">
-      <h1 className="font-semibold underline">Connect</h1>
+      <H1>Connect</H1>
       <div className="flex flex-col gap-1">
         {contactItems.map((item) => (
           <span
             key={item.name}
             className="group items-center flex w-full gap-1"
           >
-            <Label htmlFor={item.name} className="w-20">
+            <Label
+              htmlFor={item.name}
+              className="w-20 text-muted-foreground group-hover:text-foreground"
+            >
               {item.name}
             </Label>
             <Button

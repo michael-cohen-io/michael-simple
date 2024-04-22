@@ -31,6 +31,7 @@ model Company {
   id          Int         @id @default(autoincrement())
   name        String      @unique
   image       String
+  url         String?
   workEntries WorkEntry[]
   createdAt   DateTime    @default(now())
 }
