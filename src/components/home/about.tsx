@@ -17,13 +17,14 @@ export default function About() {
           I&apos;m{" "}
           <Tooltip delayDuration={0}>
             <TooltipTrigger>
-              <span className="font-bold text-primary hover:line-through">
+              <span className="font-bold text-primary md:hover:line-through">
                 a software developer
               </span>
             </TooltipTrigger>
             <TooltipContent>
               <span className="font-bold">
-                most recently an engineering manager
+                most recently{" "}
+                <span className="text-primary">an engineering manager</span>
               </span>
             </TooltipContent>
           </Tooltip>{" "}
