@@ -53,7 +53,6 @@ function workItemDescriptionComponent(workItem: any) {
 export default async function Work() {
   const companies = await fetchWorkData();
 
-  // maps each workData item's ID to its description component
   const workItemDescriptionComponentMap = companies
     .flatMap((c) => c.workEntries)
     .reduce(
