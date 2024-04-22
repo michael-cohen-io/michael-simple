@@ -35,7 +35,6 @@ export function WorkAccordion({
   companies: CompanyWithInfo[];
   workItemDescriptionComponentMap: any;
 }) {
-  console.log(companies)
   return (
     <Accordion type="single" collapsible>
       {companies.map((company, index) => (
