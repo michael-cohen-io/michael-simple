@@ -14,7 +14,7 @@ export default function Header() {
     <>
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 mx-auto max-w-2xl px-8 flex items-center z-50 transition-all",
+          "fixed top-0 left-0 right-0 mx-auto max-w-2xl px-8 items-center z-50 transition-all",
           scrolled ? "border-b backdrop-blur-xl" : "bg-transparent/0",
         )}
       >
