@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(font.className)}>
         <Providers>
-          <main className="mx-auto px-8 max-w-2xl">
+          <main className="mx-auto px-8 max-w-3xl">
             <Header />
             <div>{children}</div>
           </main>

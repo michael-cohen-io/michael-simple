@@ -5,7 +5,7 @@ import { Suspense } from "react";
 const components = {
   p: (props: any) => <p>{props.children}</p>,
   a: (props: any) => (
-    <Link {...props} className="text-primary hover:underline">
+    <Link {...props} className="text-primary underline hover:text-primary/85">
       {props.children}
     </Link>
   ),

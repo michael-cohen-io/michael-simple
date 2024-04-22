@@ -67,7 +67,7 @@ export function WorkTimeline({
       {activeCard && (
         <Card className="w-2/3 h-80 flex flex-col">
           <CardHeader className="border-b">
-            <CardTitle className="flex justify-between items-center">
+            <CardTitle className="flex text-xl justify-between items-center">
               {activeCard.name}
               <Button
                 variant="ghost"
@@ -85,7 +85,10 @@ export function WorkTimeline({
           <CardContent className="h-full overflow-y-auto p-4">
             {activeCard.workEntries.map((work, index) => (
               <div key={index}>
-                <h2 className="font-semibold text-lg">{work.team}</h2>
+                <h2 className="font-semibold text-lg underline">{work.team}</h2>
+                <h4 className="font-semibold text-sm text-primary">
+                  {work.role}
+                </h4>
                 <p className="text-sm text-muted-foreground pb-1">
                   {formatDate(work.startDate)} - {formatDate(work.endDate)}
                 </p>

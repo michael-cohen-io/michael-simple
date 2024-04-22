@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <div className="absolute w-full mx-auto px-auto py-5 text-center">
-      <p className="text-md text-muted-foreground">
+      <p className="text-base text-muted-foreground">
         Built with 🤍 by{" "}
         <span className="text-primary font-semibold underline-offset-4 transition-colors hover:underline">
           <Link
