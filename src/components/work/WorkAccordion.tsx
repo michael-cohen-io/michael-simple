@@ -51,7 +51,7 @@ export function WorkAccordion({
                   {company.description ? (
                     <HoverCard>
                       <HoverCardTrigger
-                        href={company.url}
+                        href={company.url ?? undefined}
                         className="text-primary"
                       >
                         {company.name}
