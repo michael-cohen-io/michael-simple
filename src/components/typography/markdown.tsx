@@ -1,6 +1,6 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 
 const components = {
   p: (props: any) => <p>{props.children}</p>,
@@ -19,13 +19,13 @@ export default async function MarkDownTextWithLinebreaks(props: {
   const lines = text.split("\\n");
   return (
     <>
-      {lines.map((line) => (
-        <>
+      {lines.map((line, index) => (
+        <Fragment key={index}>
           <Suspense fallback={<>Loading...</>}>
             <MDXRemote source={line} components={{ ...components }} />
           </Suspense>
           <br />
-        </>
+        </Fragment>
       ))}
     </>
   );

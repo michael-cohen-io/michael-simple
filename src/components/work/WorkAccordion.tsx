@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 
 import { CompanyWithInfo } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { acronym, formatDate } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
   Accordion,
@@ -19,6 +19,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import Link from "next/link";
 
 export function WorkAccordion({
@@ -36,11 +43,48 @@ export function WorkAccordion({
           <AccordionContent asChild>
             <Card className="h-80 flex flex-col">
               <CardHeader>
-                <CardTitle className="text-foreground text-xl">
-                  {company.url ? (
-                    <Link href={company.url} className="text-primary">{company.name}</Link>
+                <CardTitle className="text-foreground text-xl flex gap-2 items-center">
+                  <Avatar>
+                    <AvatarImage src={company.image} />
+                    <AvatarFallback>{acronym(company.name)}</AvatarFallback>
+                  </Avatar>
+                  {company.description ? (
+                    <HoverCard>
+                      <HoverCardTrigger
+                        href={company.url}
+                        className="text-primary"
+                      >
+                        {company.name}
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80">
+                        <div className="flex justify-between space-x-4">
+                          <Avatar>
+                            <AvatarImage src={company.image} />
+                            <AvatarFallback>
+                              {acronym(company.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-semibold">
+                              {company.name}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {company.description}
+                            </p>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   ) : (
-                    company.name
+                    <>
+                      {company.url ? (
+                        <Link href={company.url} className="text-primary">
+                          {company.name}
+                        </Link>
+                      ) : (
+                        company.name
+                      )}
+                    </>
                   )}
                 </CardTitle>
                 <CardDescription>

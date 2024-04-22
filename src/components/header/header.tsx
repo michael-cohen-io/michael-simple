@@ -3,9 +3,9 @@
 import Link from "next/link";
 
 import useScroll from "@/lib/hooks/use-scroll";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import ThemeButton from "../theme/theme-button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function Header() {
   const scrolled = useScroll(50);
@@ -26,13 +26,13 @@ export default function Header() {
           >
             <h1 className="text-primary text-4xl">{"<MC>"}</h1>
             <div className="flex gap-2 items-center group">
-              <Image
-                src="/profile.jpg"
-                alt="Michael Profile image"
-                width={75}
-                height={75}
-                className="grayscale rounded-full group-hover:grayscale-0"
-              />
+              <Avatar className="h-20 w-20">
+                <AvatarImage
+                  src="/profile.jpg"
+                  className="grayscale group-hover:grayscale-0"
+                />
+                <AvatarFallback>MC</AvatarFallback>
+              </Avatar>
               <h2 className="text-xl font-semibold group-hover:text-primary">
                 Michael Cohen
               </h2>

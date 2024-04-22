@@ -32,6 +32,7 @@ model Company {
   name        String      @unique
   image       String
   url         String?
+  description String?
   workEntries WorkEntry[]
   createdAt   DateTime    @default(now())
 }

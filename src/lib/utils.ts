@@ -24,6 +24,10 @@ export function shorten(str: string, length: number) {
   return str.length > length ? str.slice(0, length) + "..." : str;
 }
 
+export function acronym(str: string) {
+  return str.replace(/[^A-Z]/g, "");
+}
+
 export function isDev(): boolean {
   return process.env.NEXT_PUBLIC_VERCEL_ENV === "development";
 }
