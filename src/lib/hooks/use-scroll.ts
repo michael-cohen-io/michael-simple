@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function useScroll(threshold: number) {
   const [scrolled, setScrolled] = useState(false);
