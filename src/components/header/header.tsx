@@ -18,14 +18,13 @@ export default function Header() {
           scrolled ? "md:border-b md:backdrop-blur-xl" : "bg-transparent/0",
         )}
       >
-        {/* Desktop Menu */}
-        <div className="w-full flex py-8 justify-between align-center">
+        <div className="w-full grid grid-cols-[90px_1fr] gap-2 py-8 justify-between align-center">
           <Link
             href="/"
-            className="flex flex-col font-light text-3xl select-none gap-3"
+            className="row-span-2 group peer flex flex-col w-min items-center font-light text-3xl select-none gap-3"
           >
-            <h1 className="text-primary text-4xl">{"<MC>"}</h1>
-            <div className="flex gap-2 items-center group">
+            <h1 className="text-primary text-4xl group-hover">{"<MC>"}</h1>
+            <div className="flex gap-2 items-center">
               <Avatar className="h-20 w-20">
                 <AvatarImage
                   src="/profile.jpg"
@@ -33,12 +32,14 @@ export default function Header() {
                 />
                 <AvatarFallback>MC</AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold group-hover:text-primary">
-                Michael Cohen
-              </h2>
             </div>
           </Link>
-          <ThemeButton />
+          <div className="flex justify-end">
+            <ThemeButton className="w-min" />
+          </div>
+          <h2 className="text-xl peer-hover:text-primary font-semibold hover:text-primary group-hover:text-primary">
+            Michael Cohen
+          </h2>
         </div>
       </div>
     </>

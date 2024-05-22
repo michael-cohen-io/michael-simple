@@ -68,7 +68,12 @@ export default async function Work() {
       <H1>Work Experience</H1>
       <div className="text-sm font-light">
         are you oldschool? read on at{" "}
-        <Button variant="ghost" size="sm" className="px-0 md:p-2" asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-1 -translate-x-1 md:-translate-x-0 md:p-2"
+          asChild
+        >
           <Link href="/MichaelCohenResume.pdf">
             my_resume_final_final_copy_NEW.pdf
           </Link>
