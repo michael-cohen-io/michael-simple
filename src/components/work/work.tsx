@@ -20,8 +20,7 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
     },
   });
   // Add a computed field to each company
-  const enhanced = companies;
-  const enhan_finaced = companies
+  const enhanced = companies
     .filter((c) => c.workEntries.length > 0)
     .map((company) => {
       const startDate = company.workEntries.reduce(
