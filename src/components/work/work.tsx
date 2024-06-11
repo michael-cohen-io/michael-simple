@@ -20,7 +20,8 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
     },
   });
   // Add a computed field to each company
-  const enhanced = companies
+  const enhanced = companies;
+  const enhan_finaced = companies
     .filter((c) => c.workEntries.length > 0)
     .map((company) => {
       const startDate = company.workEntries.reduce(
@@ -79,9 +80,7 @@ export default async function Work() {
           className="px-1 -translate-x-1 md:-translate-x-0 md:p-2"
           asChild
         >
-          <Link href="/MichaelCohenResume.pdf">
-            my_resume_final_final_copy_NEW.pdf
-          </Link>
+          <Link href="/MichaelCohenResume.pdf">MichaelCohenResume.pdf</Link>
         </Button>
       </div>
       <WorkAccordion
