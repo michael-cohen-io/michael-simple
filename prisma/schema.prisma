@@ -25,6 +25,7 @@ model WorkEntry {
   endDate     DateTime?
   iconColor   String?
   createdAt   DateTime @default(now())
+  visible      Boolean @default(true)
 }
 
 model Company {

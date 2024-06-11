@@ -13,37 +13,42 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
         orderBy: {
           startDate: "desc",
         },
+        where: {
+          visible: true,
+        },
       },
     },
   });
   // Add a computed field to each company
-  const enhanced = companies.map((company) => {
-    const startDate = company.workEntries.reduce(
-      (earliestDate, currentTeam) => {
-        const currentStartDate = new Date(currentTeam.startDate);
-        return currentStartDate < earliestDate
-          ? currentStartDate
-          : earliestDate;
-      },
-      new Date(company.workEntries[0].startDate),
-    );
+  const enhanced = companies
+    .filter((c) => c.workEntries.length > 0)
+    .map((company) => {
+      const startDate = company.workEntries.reduce(
+        (earliestDate, currentTeam) => {
+          const currentStartDate = new Date(currentTeam.startDate);
+          return currentStartDate < earliestDate
+            ? currentStartDate
+            : earliestDate;
+        },
+        new Date(company.workEntries[0].startDate),
+      );
 
-    const endDate = company.workEntries.some((team) => team.endDate === null)
-      ? undefined
-      : company.workEntries.reduce((latestDate, currentTeam) => {
-          if (currentTeam.endDate === null) {
-            return latestDate;
-          }
-          const currentEndDate = new Date(currentTeam.endDate);
-          return currentEndDate > latestDate ? currentEndDate : latestDate;
-        }, new Date(0));
+      const endDate = company.workEntries.some((team) => team.endDate === null)
+        ? undefined
+        : company.workEntries.reduce((latestDate, currentTeam) => {
+            if (currentTeam.endDate === null) {
+              return latestDate;
+            }
+            const currentEndDate = new Date(currentTeam.endDate);
+            return currentEndDate > latestDate ? currentEndDate : latestDate;
+          }, new Date(0));
 
-    return {
-      startDate,
-      endDate,
-      ...company,
-    };
-  });
+      return {
+        startDate,
+        endDate,
+        ...company,
+      };
+    });
   return enhanced.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
 }
 
