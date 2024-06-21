@@ -36,7 +36,7 @@ export function WorkAccordion({
   workItemDescriptionComponentMap: any;
 }) {
   return (
-    <Accordion type="single" collapsible>
+    <Accordion type="multiple" defaultValue={[companies[0].name]}>
       {companies.map((company, index) => (
         <AccordionItem key={index} value={company.name}>
           <AccordionTrigger>{company.name}</AccordionTrigger>
