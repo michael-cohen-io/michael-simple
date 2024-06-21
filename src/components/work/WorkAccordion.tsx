@@ -122,11 +122,15 @@ export function WorkAccordion({
                       {work.team}
                     </CardTitle>
                     <CardDescription>
-                      <span className="font-semibold text-primary">
-                        {work.role}
-                      </span>
-                      <br />
-                      {formatDate(work.startDate)} - {formatDate(work.endDate)}
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-primary">
+                          {work.role}
+                        </span>
+                        <p className="text-xs">
+                          {formatDate(work.startDate)} -{" "}
+                          {formatDate(work.endDate)}
+                        </p>
+                      </div>
                     </CardDescription>
                     <Separator />
                   </CardHeader>
