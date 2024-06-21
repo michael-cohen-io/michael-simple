@@ -19,14 +19,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function WorkAccordion({
   companies,
@@ -35,83 +29,115 @@ export function WorkAccordion({
   companies: CompanyWithInfo[];
   workItemDescriptionComponentMap: any;
 }) {
+  const [openSections, setOpenSections] = React.useState<string[]>([
+    companies[0].name,
+  ]);
+
+  const handleValueChange = (value: string[]) => {
+    setOpenSections(value);
+  };
   return (
-    <Accordion type="multiple" defaultValue={[companies[0].name]}>
+    <Accordion
+      type="multiple"
+      defaultValue={[companies[0].name]}
+      onValueChange={handleValueChange}
+    >
       {companies.map((company, index) => (
         <AccordionItem key={index} value={company.name}>
-          <AccordionTrigger>{company.name}</AccordionTrigger>
+          <AccordionTrigger>
+            <div className="flex w-full items-center gap-2">
+              <Avatar>
+                <AvatarImage src={company.image} />
+                <AvatarFallback>{acronym(company.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex justify-between items-center w-full">
+                {company.name}
+                {openSections.filter((v) => v == company.name).length > 0 && (
+                  <div className="text-xs hover:text-muted-foreground text-muted-foreground/80 px-2">
+                    {formatDate(company.startDate)} -{" "}
+                    {formatDate(company.endDate)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </AccordionTrigger>
           <AccordionContent asChild>
-            <Card className="h-80 flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-foreground text-xl flex gap-2 items-center">
-                  <Avatar>
-                    <AvatarImage src={company.image} />
-                    <AvatarFallback>{acronym(company.name)}</AvatarFallback>
-                  </Avatar>
-                  {company.description ? (
-                    <HoverCard>
-                      <HoverCardTrigger
-                        href={company.url ?? undefined}
-                        className="text-primary"
-                      >
-                        {company.name}
-                      </HoverCardTrigger>
-                      <HoverCardContent className="w-80">
-                        <div className="flex justify-between space-x-4">
-                          <Avatar>
-                            <AvatarImage src={company.image} />
-                            <AvatarFallback>
-                              {acronym(company.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-semibold">
-                              {company.name}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              {company.description}
-                            </p>
-                          </div>
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
-                  ) : (
-                    <>
-                      {company.url ? (
-                        <Link href={company.url} className="text-primary">
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {/* <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-foreground text-xl flex gap-2 items-center">
+                    <Avatar>
+                      <AvatarImage src={company.image} />
+                      <AvatarFallback>{acronym(company.name)}</AvatarFallback>
+                    </Avatar>
+                    {company.description ? (
+                      <HoverCard>
+                        <HoverCardTrigger
+                          href={company.url ?? undefined}
+                          className="text-primary"
+                        >
                           {company.name}
-                        </Link>
-                      ) : (
-                        company.name
-                      )}
-                    </>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {formatDate(company.startDate)} -{" "}
-                  {formatDate(company.endDate)}
-                </CardDescription>
-                <Separator />
-              </CardHeader>
-              <CardContent className="h-full overflow-y-auto p-4">
-                {company.workEntries.map((work, index) => (
-                  <div key={index}>
-                    <h2 className="font-semibold text-foreground text-lg underline">
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="flex justify-between space-x-4">
+                            <Avatar>
+                              <AvatarImage src={company.image} />
+                              <AvatarFallback>
+                                {acronym(company.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-semibold">
+                                {company.name}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                {company.description}
+                              </p>
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    ) : (
+                      <>
+                        {company.url ? (
+                          <Link href={company.url} className="text-primary">
+                            {company.name}
+                          </Link>
+                        ) : (
+                          company.name
+                        )}
+                      </>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {formatDate(company.startDate)} -{" "}
+                    {formatDate(company.endDate)}
+                  </CardDescription>
+                </CardHeader>
+              </Card> */}
+              {company.workEntries.map((work, index) => (
+                <Card key={index} className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-foreground text-xl flex gap-2 items-center">
                       {work.team}
-                    </h2>
-                    <h4 className="font-semibold text-sm text-primary">
-                      {work.role}
-                    </h4>
-                    <p className="text-sm text-muted-foreground pb-1">
+                    </CardTitle>
+                    <CardDescription>
+                      <span className="font-semibold text-primary">
+                        {work.role}
+                      </span>
+                      <br />
                       {formatDate(work.startDate)} - {formatDate(work.endDate)}
-                    </p>
+                    </CardDescription>
+                    <Separator />
+                  </CardHeader>
+                  <CardContent>
                     <div className="text-sm">
                       {workItemDescriptionComponentMap[work.id]}
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </AccordionContent>
         </AccordionItem>
       ))}

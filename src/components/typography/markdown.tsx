@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Fragment, Suspense } from "react";
 
 const components = {
-  p: (props: any) => <p>{props.children}</p>,
+  p: (props: any) => <p className="py-1">{props.children}</p>,
   a: (props: any) => (
     <Link {...props} className="text-primary underline hover:text-primary/85">
       {props.children}
@@ -24,7 +24,6 @@ export default async function MarkDownTextWithLinebreaks(props: {
           <Suspense fallback={<>Loading...</>}>
             <MDXRemote source={line} components={{ ...components }} />
           </Suspense>
-          <br />
         </Fragment>
       ))}
     </>
