@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTheme } from "next-themes";
 
 import {
   Card,
@@ -32,6 +33,7 @@ export function WorkAccordion({
   const [openSections, setOpenSections] = React.useState<string[]>([
     companies[0].name,
   ]);
+  const { theme } = useTheme();
 
   const handleValueChange = (value: string[]) => {
     setOpenSections(value);
@@ -47,7 +49,13 @@ export function WorkAccordion({
           <AccordionTrigger>
             <div className="flex w-full items-center gap-2">
               <Avatar>
-                <AvatarImage src={company.image} />
+                <AvatarImage
+                  src={
+                    theme === "dark" && company.imageDark
+                      ? company.imageDark
+                      : company.image
+                  }
+                />
                 <AvatarFallback>{acronym(company.name)}</AvatarFallback>
               </Avatar>
               <div className="flex justify-between items-center w-full">
@@ -63,58 +71,6 @@ export function WorkAccordion({
           </AccordionTrigger>
           <AccordionContent asChild>
             <div className="space-y-4 max-h-80 overflow-y-auto">
-              {/* <Card className="flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-foreground text-xl flex gap-2 items-center">
-                    <Avatar>
-                      <AvatarImage src={company.image} />
-                      <AvatarFallback>{acronym(company.name)}</AvatarFallback>
-                    </Avatar>
-                    {company.description ? (
-                      <HoverCard>
-                        <HoverCardTrigger
-                          href={company.url ?? undefined}
-                          className="text-primary"
-                        >
-                          {company.name}
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80">
-                          <div className="flex justify-between space-x-4">
-                            <Avatar>
-                              <AvatarImage src={company.image} />
-                              <AvatarFallback>
-                                {acronym(company.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="space-y-1">
-                              <h4 className="text-sm font-semibold">
-                                {company.name}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                {company.description}
-                              </p>
-                            </div>
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
-                    ) : (
-                      <>
-                        {company.url ? (
-                          <Link href={company.url} className="text-primary">
-                            {company.name}
-                          </Link>
-                        ) : (
-                          company.name
-                        )}
-                      </>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {formatDate(company.startDate)} -{" "}
-                    {formatDate(company.endDate)}
-                  </CardDescription>
-                </CardHeader>
-              </Card> */}
               {company.workEntries.map((work, index) => (
                 <Card key={index} className="flex flex-col">
                   <CardHeader>

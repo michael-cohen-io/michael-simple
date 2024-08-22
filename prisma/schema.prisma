@@ -32,6 +32,7 @@ model Company {
   id          Int         @id @default(autoincrement())
   name        String      @unique
   image       String
+  imageDark   String?
   url         String?
   description String?
   workEntries WorkEntry[]
