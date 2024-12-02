@@ -1,0 +1,80 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage[parfill]{parskip}
+\usepackage{lmodern}
+\usepackage{array}
+
+% Adjust margins to be tighter
+\usepackage[margin=0.5in]{geometry}
+
+% Adjust section formats - reduced spacing
+\titleformat{\section}{\Large\scshape\raggedright}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{6pt}{4pt}
+
+% Reduce itemize spacing significantly
+\setlist[itemize]{leftmargin=*, topsep=-2pt, itemsep=-2pt, parsep=0pt}
+
+% Define a vertical bar command with proper spacing
+\newcommand{\divbar}{\ensuremath{\:}\textbar\ensuremath{\:}}
+
+% Define a semi-bold text command
+\newcommand{\semibold}[1]{{\fontseries{sb}\selectfont #1}}
+
+% Command for job entries with adjusted spacing
+\newcommand{\jobentry}[4]{
+    {\noindent\textbf{#1}\hfill#2}\\[0.3em] % More space between company and role
+    {\noindent\semibold{#3}\hfill#4}\\[-0.5em] % Negative space to pull up bullet points
+}
+
+\begin{document}
+
+{\centering\Large\textbf{Michael Cohen}\par}
+\vspace{-0.3em}
+{\centering New York, NY \hspace{2em} (305) 733-5490 \hspace{2em} \href{mailto:micohen13@gmail.com}{micohen13@gmail.com} \hspace{2em} \href{https://michaelcohen.io}{michaelcohen.io}\par}
+\vspace{0.2em}
+
+\section{Work Experience}
+
+\jobentry{Anthropic}{Aug '24 -- Present}{Member of Technical Staff \divbar API Team}{}
+\begin{itemize}
+    \item Developing new product features and improvements for Anthropic's API.
+\end{itemize}
+
+\jobentry{OpenSea}{Aug '22 -- Dec '23}{Engineering Manager \divbar Creator Team}{}
+\begin{itemize}
+    \item Hired and managed 6 engineers (FE + BE) focused on creator products/tools.
+    \item Led team in developing Primary Drops, a \$30M+ GMV NFT creation platform, grew from 0\% to $\sim$30\% market share.
+    \item Shipped Creator Studio, a one-stop shop, no-code solution for creators to build \& manage 16+ million NFTs created across 11K collections to date.
+    \item Shipped new highly customizable collection landing pages, with rich storytelling for creators.
+    \item Collaborated with BD, marketing, ops, legal, and finance to secure 50+ high-value partnerships, ensuring seamless product launches resulting in \$30M+ in GMV growth.
+\end{itemize}
+
+\jobentry{OpenSea}{Jun '21 -- Aug '22}{Senior Software Engineer \divbar Platform Team}{}
+\begin{itemize}
+    \item Enhanced OpenSea's platform by introducing scalable architecture improvements; directly contributed to a 50\% increase in uptime during a period of rapid growth and high user demand.
+    \item Led the scaling, migration, and documentation rewrite of the public REST API, introduced a new Websocket API, and integrated advanced queuing systems for robust scalability.
+    \item Developed a robust spam detection algorithm for NFT mints, cutting down fake NFT listings by 75\%, and successfully integrated Solana blockchain, boosting transaction efficiency and reliability within the marketplace.
+\end{itemize}
+
+\jobentry{Amazon}{Mar '18 -- Jun '21}{Software Engineer}{}
+\begin{itemize}
+    \item Led development of Data Lifecycle Manager for AWS Backup Service (\$2.9B revenue in 2017), automating backup policies for data stored on EBS volumes.
+    \item Built full-stack features for iOS Creator app and led FireTV project, transforming Amazon Shopping app into a livestream-centric experience.
+    \item Implemented gamification features for Amazon Live platform, growing creator base from under 2K to over 15K creators.
+\end{itemize}
+
+\section{Education}
+\jobentry{University of Florida}{December 2017}{B.S. in Computer Science Engineering}{}
+
+\section{Skills}
+\begin{itemize}
+    \item \textbf{Languages \& Frameworks:} Python, Java, TypeScript, React, NodeJS, Elixir, Solidity, Go
+    \item \textbf{Expertise:} Distributed Systems, Backend Development, Frontend Development, Full Stack Web Development, Mobile Applications (iOS / Android), Cloud \& Serverless Architecture, Smart Contract Development
+\end{itemize}
+
+\end{document}
