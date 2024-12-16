@@ -14,14 +14,17 @@ import {
 import { CompanyWithInfo } from "@/lib/types";
 import { acronym, formatDate } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Timeline,
+  TimelineItem,
+  TimelineConnector,
+  TimelineHeader,
+  TimelineTitle,
+  TimelineIcon,
+  TimelineContent,
+  TimelineTime,
+} from "@/components/timeline/timeline";
 
 export function WorkAccordion({
   companies,
@@ -30,51 +33,36 @@ export function WorkAccordion({
   companies: CompanyWithInfo[];
   workItemDescriptionComponentMap: any;
 }) {
-  const [openSections, setOpenSections] = React.useState<string[]>([
-    companies[0].name,
-  ]);
   const { theme } = useTheme();
 
-  const handleValueChange = (value: string[]) => {
-    setOpenSections(value);
-  };
   return (
-    <Accordion
-      type="multiple"
-      defaultValue={[companies[0].name]}
-      onValueChange={handleValueChange}
-    >
+    <Timeline>
       {companies.map((company, index) => (
-        <AccordionItem key={index} value={company.name}>
-          <AccordionTrigger>
-            <div className="flex w-full items-center gap-2">
-              <Avatar>
-                <AvatarImage
-                  src={
-                    theme === "dark" && company.imageDark
-                      ? company.imageDark
-                      : company.image
-                  }
-                />
-                <AvatarFallback>{acronym(company.name)}</AvatarFallback>
-              </Avatar>
-              <div className="flex justify-between items-center w-full">
-                {company.name}
-                {openSections.filter((v) => v == company.name).length > 0 && (
-                  <div className="text-xs hover:text-muted-foreground text-muted-foreground/80 px-2">
-                    {formatDate(company.startDate)} -{" "}
-                    {formatDate(company.endDate)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent asChild>
-            <div className="space-y-4 max-h-80 overflow-y-auto">
-              {company.workEntries.map((work, index) => (
-                <Card key={index} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-foreground text-xl flex gap-2 items-center">
+        <TimelineItem key={index}>
+          {index < companies.length - 1 && <TimelineConnector />}
+          <TimelineHeader>
+            <TimelineIcon />
+            <TimelineTime>
+              {formatDate(company.startDate)} - {formatDate(company.endDate)}
+            </TimelineTime>
+            <Avatar className="h-8 w-8 ml-8">
+              <AvatarImage
+                src={
+                  theme === "dark" && company.imageDark
+                    ? company.imageDark
+                    : company.image
+                }
+              />
+              <AvatarFallback>{acronym(company.name)}</AvatarFallback>
+            </Avatar>
+            <TimelineTitle>{company.name}</TimelineTitle>
+          </TimelineHeader>
+          <TimelineContent>
+            <Card className="flex flex-col">
+              <CardHeader>
+                {company.workEntries.map((work, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <CardTitle className="text-foreground text-lg flex gap-2 items-center">
                       {work.team}
                     </CardTitle>
                     <CardDescription>
@@ -83,24 +71,25 @@ export function WorkAccordion({
                           {work.role}
                         </span>
                         <p className="text-xs">
-                          {formatDate(work.startDate)} -{" "}
-                          {formatDate(work.endDate)}
+                          {formatDate(work.startDate)} - {formatDate(work.endDate)}
                         </p>
                       </div>
                     </CardDescription>
-                    <Separator />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm">
-                      {workItemDescriptionComponentMap[work.id]}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+                    <CardContent className="px-0">
+                      <div className="text-sm">
+                        {workItemDescriptionComponentMap[work.id]}
+                      </div>
+                    </CardContent>
+                    {idx < company.workEntries.length - 1 && (
+                      <Separator className="my-4" />
+                    )}
+                  </div>
+                ))}
+              </CardHeader>
+            </Card>
+          </TimelineContent>
+        </TimelineItem>
       ))}
-    </Accordion>
+    </Timeline>
   );
 }

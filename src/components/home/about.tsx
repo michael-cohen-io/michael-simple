@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export default function About() {
   return (
@@ -15,19 +10,10 @@ export default function About() {
             Hello, World!
           </code>{" "}
           I&apos;m{" "}
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger>
-              <span className="font-bold text-primary md:hover:line-through">
+          <span className="font-bold text-primary">
                 a software developer
               </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <span className="font-bold">
-                most recently{" "}
-                <span className="text-primary">an engineering manager</span>
-              </span>
-            </TooltipContent>
-          </Tooltip>{" "}
+          {" "}
           based out of Brooklyn, NY. Short blurbs are not my specialty. Reach
           out and let&apos;s become friends if you want to find out more about
           me.
