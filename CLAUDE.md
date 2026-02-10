@@ -1,35 +1,61 @@
 # CLAUDE.md
 
-This file provides guidance for AI coding agents working on this repository.
+This file provides context for AI-assisted development on this project.
 
 ## Project Overview
 
-Personal website for Michael Cohen, hosted at [michaelcohen.io](https://www.michaelcohen.io). Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, and Prisma with PostgreSQL.
+This is Michael Cohen's personal website ([michaelcohen.io](https://www.michaelcohen.io)), built with Next.js 14 using the App Router pattern. It's a single-page site with three main sections: About, Work Experience, and Contact.
+
+## Architecture
+
+- **Next.js App Router** — pages live in `src/app/`, components in `src/components/`
+- **React Server Components** are the default; client components are explicitly marked with `"use client"`
+- **Prisma ORM** connects to Vercel Postgres — schema is in `prisma/schema.prisma`
+- **shadcn/ui** components live in `src/components/ui/` and are configured via `components.json`
+- **Theme** — dark/light mode via `next-themes`, toggled in `src/components/theme/`
+
+## Key Files
+
+- `src/app/layout.tsx` — Root layout: Raleway font, header, footer, theme provider, Vercel Analytics
+- `src/app/page.tsx` — Home page composing About, Work, and Contact sections
+- `src/lib/prisma.ts` — Prisma client singleton (prevents multiple instances in dev)
+- `src/lib/utils.ts` — Utility functions including `cn()` for Tailwind class merging
+- `prisma/schema.prisma` — Database models: `Company` and `WorkEntry`
+
+## Code Conventions
+
+- **TypeScript** throughout — strict mode enabled
+- **Tailwind CSS** for all styling — no CSS modules or styled-components
+- **shadcn/ui** for base UI primitives — use existing components from `src/components/ui/` before creating new ones
+- **Path aliases** — use `@/` to reference `src/` (e.g., `@/components/`, `@/lib/`)
+- **Formatting** — Prettier with 2-space indentation, no tabs (see `.prettierrc`)
+- **Linting** — ESLint with `next/core-web-vitals` preset
 
 ## Commands
 
-- `pnpm dev` — start dev server
-- `pnpm build` — production build
-- `pnpm lint` — run ESLint (`next lint`)
-- `pnpm db:migrate` — run Prisma migrations (`prisma migrate dev`)
-- `pnpm postinstall` — regenerate Prisma client (`prisma generate`)
+```bash
+pnpm dev          # Start dev server
+pnpm build        # Production build
+pnpm lint         # Run ESLint
+pnpm db:migrate   # Run Prisma migrations
+```
 
-## Code Style & Conventions
+## Environment Variables
 
-- **Language:** TypeScript (strict). All source files use `.ts` / `.tsx`.
-- **Formatting:** Prettier with 2-space indentation, no tabs (see `.prettierrc`).
-- **Linting:** ESLint extends `next/core-web-vitals`.
-- **Imports:** Use `@/` path alias for `src/` (e.g. `@/components/...`, `@/lib/...`).
-- **Components:** React Server Components by default (Next.js App Router). Use `"use client"` only when needed for interactivity.
-- **UI primitives:** Use shadcn/ui components from `src/components/ui/`. These are based on Radix UI and styled with Tailwind + `class-variance-authority`.
-- **Styling:** Tailwind CSS utility classes. Use `cn()` from `@/lib/utils` for conditional class merging.
-- **Theme:** Dark/light mode via `next-themes`. Support both themes when adding UI.
-- **Database:** Prisma ORM with PostgreSQL. Schema lives in `prisma/schema.prisma`. Use the singleton client from `@/lib/prisma.ts`.
-- **Font:** Raleway (Google Fonts), loaded in `src/app/layout.tsx`.
+Required for database access:
+- `POSTGRES_PRISMA_URL` — Pooled connection string
+- `POSTGRES_URL_NON_POOLING` — Direct connection string
 
-## Architecture Notes
+## Database
 
-- Single-page layout: `src/app/page.tsx` composes `About`, `Work`, and `Contact` sections.
-- Work experience data is stored in PostgreSQL (models: `Company`, `WorkEntry`) and fetched server-side.
-- The site is deployed on Vercel with Vercel Postgres. Environment variables `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` are required.
-- Node.js 24.x is required (see `.nvmrc` and `package.json` engines).
+Two models in `prisma/schema.prisma`:
+- **Company** — `id`, `name` (unique), `image`, `imageDark`, `url`, `description`
+- **WorkEntry** — `id`, `companyId` (FK), `team`, `role`, `description`, `startDate`, `endDate`, `iconColor`, `visible`
+
+Run `pnpm db:migrate` after schema changes. The `postinstall` script runs `prisma generate` automatically.
+
+## Deployment
+
+- Hosted on **Vercel** — auto-deploys from `main`
+- Database: **Vercel Postgres**
+- Config in `vercel.json` uses npm commands (Vercel's build pipeline)
