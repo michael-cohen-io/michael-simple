@@ -9,10 +9,10 @@
             "command": "echo Hello"
         },
         {
-            "type": "npm",
-            "script": "dev",
+            "type": "shell",
+            "command": "bun run dev",
             "problemMatcher": [],
-            "label": "npm: dev",
+            "label": "bun: dev",
             "detail": "next dev"
         }
     ]
