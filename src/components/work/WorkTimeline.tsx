@@ -31,7 +31,7 @@ export function WorkTimeline({
   workItemDescriptionComponentMap,
 }: {
   companies: CompanyWithInfo[];
-  workItemDescriptionComponentMap: any;
+  workItemDescriptionComponentMap: Record<number, React.ReactNode>;
 }) {
   const { theme } = useTheme();
 

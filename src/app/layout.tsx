@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const font = Raleway({
   weight: ["100", "200", "300", "400", "500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-roboto",
+  variable: "--font-raleway",
 });
 
 export const metadata: Metadata = {

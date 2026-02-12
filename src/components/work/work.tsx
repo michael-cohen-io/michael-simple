@@ -1,3 +1,4 @@
+import React from "react";
 import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
 import prisma from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -52,17 +53,17 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
   return enhanced.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
 }
 
-function workItemDescriptionComponent(workItem: any) {
+function workItemDescriptionComponent(workItem: { description: string }) {
   return <MarkDownTextWithLinebreaks text={workItem.description} />;
 }
 
 export default async function Work() {
   const companies = await fetchWorkData();
 
-  const workItemDescriptionComponentMap = companies
+  const workItemDescriptionComponentMap: Record<number, React.ReactNode> = companies
     .flatMap((c) => c.workEntries)
     .reduce(
-      (acc: any, workItem: { id: any }) => ({
+      (acc: Record<number, React.ReactNode>, workItem) => ({
         ...acc,
         [workItem.id]: workItemDescriptionComponent(workItem),
       }),
