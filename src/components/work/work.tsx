@@ -3,7 +3,8 @@ import prisma from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CompanyWithInfo } from "@/lib/types";
-import { WorkAccordion } from "./WorkAccordion";
+import { MobileWorkAccordion } from "./MobileWorkAccordion";
+import { WorkTimeline } from "./WorkTimeline";
 import { H1 } from "../typography/heading";
 
 async function fetchWorkData(): Promise<CompanyWithInfo[]> {
@@ -52,17 +53,17 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
   return enhanced.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
 }
 
-function workItemDescriptionComponent(workItem: any) {
-  return <MarkDownTextWithLinebreaks text={workItem.description} />;
+function workItemDescriptionComponent(workItem: { id: number; description: string | null }) {
+  return <MarkDownTextWithLinebreaks text={workItem.description ?? ""} />;
 }
 
 export default async function Work() {
   const companies = await fetchWorkData();
 
-  const workItemDescriptionComponentMap = companies
+  const workItemDescriptionComponentMap: Record<number, React.ReactNode> = companies
     .flatMap((c) => c.workEntries)
     .reduce(
-      (acc: any, workItem: { id: any }) => ({
+      (acc, workItem) => ({
         ...acc,
         [workItem.id]: workItemDescriptionComponent(workItem),
       }),
@@ -82,10 +83,18 @@ export default async function Work() {
           <Link href="/MichaelCohenResume.pdf">MichaelCohenResume.pdf</Link>
         </Button>
       </div>
-      <WorkAccordion
-        companies={companies}
-        workItemDescriptionComponentMap={workItemDescriptionComponentMap}
-      />
+      <div className="md:hidden">
+        <MobileWorkAccordion
+          companies={companies}
+          workItemDescriptionComponentMap={workItemDescriptionComponentMap}
+        />
+      </div>
+      <div className="hidden md:block">
+        <WorkTimeline
+          companies={companies}
+          workItemDescriptionComponentMap={workItemDescriptionComponentMap}
+        />
+      </div>
     </div>
   );
 }

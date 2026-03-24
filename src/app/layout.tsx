@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Raleway } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
@@ -10,12 +10,19 @@ import { cn } from "@/lib/utils";
 const font = Raleway({
   weight: ["100", "200", "300", "400", "500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-roboto",
+  variable: "--font-raleway",
 });
 
 export const metadata: Metadata = {
   title: "<MC>",
   description: "Created by Michael Cohen",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "hsl(0 100% 100%)" },
+    { media: "(prefers-color-scheme: dark)", color: "hsl(0 0% 7.1%)" },
+  ],
 };
 
 export default function RootLayout({

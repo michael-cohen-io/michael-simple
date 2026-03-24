@@ -24,6 +24,7 @@ export default function ThemeButton({className}: {className?: string}) {
       variant="ghost"
       className={cn("text-foreground hover:text-muted-foreground rounded-full p-3", className)}
       onClick={() => setTheme(theme !== "light" ? "light" : "dark")}
+      aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
     >
       {theme === "light" ? (
         <MoonIcon className="h-4 w-4" />
