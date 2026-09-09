@@ -5,7 +5,7 @@ The source of [michaelcohen.io](https://michaelcohen.io), a one-page personal si
 ## Stack
 
 - [Next.js 15](https://nextjs.org/) (App Router, React 19, React Server Components) as a static export: `next build` writes the whole site to `out/`
-- [Tailwind CSS](https://tailwindcss.com/) and a few [shadcn/ui](https://ui.shadcn.com/) primitives (Radix accordion, separator, slot)
+- [Tailwind CSS 4](https://tailwindcss.com/) (configured in [`src/app/globals.css`](./src/app/globals.css), no `tailwind.config`) and a few [shadcn/ui](https://ui.shadcn.com/) primitives (Radix accordion, separator, slot)
 - The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time
 - [Raleway](https://fonts.google.com/specimen/Raleway) self-hosted through `next/font`
 - [bun](https://bun.sh/) as the package manager and script runner; deployed on Vercel as static files, with the response headers and the `*.vercel.app` redirect in [`vercel.json`](./vercel.json)
