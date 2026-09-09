@@ -2,9 +2,19 @@ import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
 import prisma from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CompanyWithInfo } from "@/lib/types";
+import { CompanyWithInfo, WorkEntryView } from "@/lib/types";
+import { formatDate, monthKey } from "@/lib/utils";
 import { WorkAccordion } from "./WorkAccordion";
 import { H1 } from "../typography/heading";
+
+function monthRange(startDate: Date, endDate?: Date | null) {
+  return {
+    startLabel: formatDate(startDate),
+    endLabel: formatDate(endDate),
+    startMonth: monthKey(startDate),
+    endMonth: endDate ? monthKey(endDate) : null,
+  };
+}
 
 async function fetchWorkData(): Promise<CompanyWithInfo[]> {
   const companies = await prisma.company.findMany({
@@ -19,7 +29,7 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
       },
     },
   });
-  // Add a computed field to each company
+
   const enhanced = companies
     .filter((c) => c.workEntries.length > 0)
     .map((company) => {
@@ -43,16 +53,31 @@ async function fetchWorkData(): Promise<CompanyWithInfo[]> {
             return currentEndDate > latestDate ? currentEndDate : latestDate;
           }, new Date(0));
 
-      return {
-        startDate,
-        endDate,
-        ...company,
-      };
-    });
-  return enhanced.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+      return { company, startDate, endDate };
+    })
+    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+
+  // Format every date here, on the server, so the client component only ever
+  // receives strings (see MonthRange in lib/types.ts).
+  return enhanced.map(({ company, startDate, endDate }) => {
+    const { createdAt: _companyCreatedAt, workEntries, ...rest } = company;
+    return {
+      ...rest,
+      ...monthRange(startDate, endDate),
+      workEntries: workEntries.map((entry): WorkEntryView => {
+        const {
+          startDate,
+          endDate,
+          createdAt: _entryCreatedAt,
+          ...entryRest
+        } = entry;
+        return { ...entryRest, ...monthRange(startDate, endDate) };
+      }),
+    };
+  });
 }
 
-function workItemDescriptionComponent(workItem: any) {
+function workItemDescriptionComponent(workItem: WorkEntryView) {
   return <MarkDownTextWithLinebreaks text={workItem.description} />;
 }
 
@@ -62,7 +87,7 @@ export default async function Work() {
   const workItemDescriptionComponentMap = companies
     .flatMap((c) => c.workEntries)
     .reduce(
-      (acc: any, workItem: { id: any }) => ({
+      (acc: Record<number, React.ReactNode>, workItem) => ({
         ...acc,
         [workItem.id]: workItemDescriptionComponent(workItem),
       }),
