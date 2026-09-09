@@ -102,17 +102,17 @@ export function CompanyLogo({
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={light}
+        src={company.image}
         width={32}
         height={32}
         alt=""
         loading="lazy"
         className={cn(base, company.imageDark && "dark:hidden print:block!")}
       />
-      {dark && (
+      {company.imageDark && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={dark}
+          src={company.imageDark}
           width={32}
           height={32}
           alt=""
