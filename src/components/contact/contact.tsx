@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 
+import { CONTACT_EMAIL } from "@/lib/site";
+
 import { SectionHeading } from "../typography/heading";
 
 type ContactItem = {
@@ -26,8 +28,8 @@ const contactItems: ContactItem[] = [
   },
   {
     name: "Email",
-    value: "micohen13@gmail.com",
-    url: "mailto:micohen13@gmail.com",
+    value: CONTACT_EMAIL,
+    url: `mailto:${CONTACT_EMAIL}`,
   },
 ];
 

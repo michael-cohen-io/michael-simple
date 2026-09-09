@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Raleway } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
 import Footer from "@/components/footer";
 import Header from "@/components/header/header";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const font = Raleway({
@@ -14,8 +15,37 @@ const font = Raleway({
 });
 
 export const metadata: Metadata = {
-  title: "<MC>",
-  description: "Created by Michael Cohen",
+  // Every relative URL below (canonical, og:url, the generated images)
+  // resolves against this.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "profile",
+    url: "/",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    firstName: "Michael",
+    lastName: "Cohen",
+    username: "michael-cohen-io",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@pwincessmichael",
+  },
+  robots: { index: true, follow: true },
+};
+
+/** The browser chrome colour follows the theme: white, or the dark ground. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+  ],
 };
 
 export default function RootLayout({
