@@ -57,3 +57,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* The header is fixed from md up (about 196px tall), so focus- and
+   anchor-driven scrolling must leave room for it or land underneath. */
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 13rem;
+  }
+}
+
+/* Visitors who ask for reduced motion get no animation or transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
