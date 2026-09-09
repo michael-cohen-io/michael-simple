@@ -1,11 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import useScroll from "@/lib/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import ThemeButton from "../theme/theme-button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function Header() {
   const scrolled = useScroll(50);
@@ -24,14 +24,16 @@ export default function Header() {
             className="row-span-2 group peer flex flex-col w-min items-center font-light text-3xl select-none gap-3"
           >
             <h1 className="text-primary text-4xl group-hover">{"<MC>"}</h1>
-            <div className="flex gap-2 items-center">
-              <Avatar className="h-20 w-20">
-                <AvatarImage
-                  src="/profile.jpg"
-                  className="grayscale group-hover:grayscale-0"
-                />
-                <AvatarFallback>MC</AvatarFallback>
-              </Avatar>
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full">
+              <Image
+                src="/profile.webp"
+                alt="Michael Cohen"
+                width={80}
+                height={80}
+                priority
+                sizes="80px"
+                className="h-full w-full rounded-full object-cover grayscale transition-[filter] group-hover:grayscale-0"
+              />
             </div>
           </Link>
           <div className="flex justify-end">

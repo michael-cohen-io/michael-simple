@@ -1,7 +1,5 @@
 import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
 import prisma from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { CompanyWithInfo, WorkEntryView } from "@/lib/types";
 import { formatDate, monthKey } from "@/lib/utils";
 import { WorkAccordion } from "./WorkAccordion";
@@ -96,17 +94,16 @@ export default async function Work() {
   return (
     <div className="flex flex-col w-full gap-2">
       <H1>Work Experience</H1>
-      <div className="text-sm font-light">
-        are you oldschool? read on at{" "}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-1 -translate-x-1 md:-translate-x-0 md:p-2"
-          asChild
+      <p className="text-sm font-light">
+        Prefer the classic format?{" "}
+        <a
+          href="/MichaelCohenResume.pdf"
+          download="Michael Cohen - Resume.pdf"
+          className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
-          <Link href="/MichaelCohenResume.pdf">MichaelCohenResume.pdf</Link>
-        </Button>
-      </div>
+          Download résumé (PDF)
+        </a>
+      </p>
       <WorkAccordion
         companies={companies}
         workItemDescriptionComponentMap={workItemDescriptionComponentMap}
