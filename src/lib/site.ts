@@ -30,7 +30,7 @@ export const RESUME = {
  * preview or CI, the requests would only produce 404s.
  */
 export function isVercelHost(hostname: string): boolean {
-  const apex = new URL(SITE_URL).hostname;
+  const apex = new URL(SITE_URL).hostname.replace(/^www\./, "");
   const host = hostname.toLowerCase();
   return host === apex || host === `www.${apex}` || host.endsWith(".vercel.app");
 }
