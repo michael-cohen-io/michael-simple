@@ -6,12 +6,14 @@ import { Providers } from "./providers";
 import Footer from "@/components/footer";
 import Header from "@/components/header/header";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
-import { cn } from "@/lib/utils";
 
-const font = Raleway({
-  weight: ["100", "200", "300", "400", "500", "600", "700"],
+// One variable face instead of seven static weights: a single @font-face
+// pair per subset, and Tailwind's font-sans reads it through the variable.
+const raleway = Raleway({
+  weight: "variable",
   subsets: ["latin"],
-  variable: "--font-roboto",
+  variable: "--font-raleway",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -54,8 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={cn(font.className)}>
+    <html lang="en" className={raleway.variable} suppressHydrationWarning>
+      <body className="font-sans">
         <Providers>
           {/* First in tab order; visible only while focused. */}
           <a
