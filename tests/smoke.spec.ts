@@ -74,6 +74,9 @@ test("loads the Vercel scripts on the apex and nowhere else", async ({ page, bas
   });
   await page.goto("/", { waitUntil: "networkidle" });
   expect(localRequests).toEqual([]);
+  expect(await page.evaluate(() => typeof (window as unknown as { va?: unknown }).va)).toBe(
+    "undefined",
+  );
 
   // The same files as if Vercel served them: every request to the apex is
   // answered from the local server, except the platform scripts, which are
@@ -90,6 +93,19 @@ test("loads the Vercel scripts on the apex and nowhere else", async ({ page, bas
   await page.goto("https://michaelcohen.io/", { waitUntil: "networkidle" });
   expect(apexRequests).toContain("/_vercel/insights/script.js");
   expect(apexRequests).toContain("/_vercel/speed-insights/script.js");
+
+  // The error beacon queues events for the analytics script rather than
+  // dropping them, so an error raised before it loads (a hydration error,
+  // say) is still reported. The refused script never drains the queue here.
+  const queued = await page.evaluate(() => {
+    window.dispatchEvent(
+      new ErrorEvent("error", { message: "beacon probe", error: new Error("beacon probe") }),
+    );
+    const queue = (window as unknown as { vaq?: unknown[][] }).vaq ?? [];
+    return queue.map((call) => JSON.stringify(call));
+  });
+  expect(queued.join("\n")).toContain('"name":"client-error"');
+  expect(queued.join("\n")).toContain('"message":"beacon probe"');
 
   for (const host of ["www.michaelcohen.io", "michael-simple-abc123.vercel.app"]) {
     expect(isVercelHost(host), host).toBe(true);
