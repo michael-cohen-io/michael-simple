@@ -1,96 +1,66 @@
-import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
 import prisma from "@/lib/prisma";
-import { CompanyWithInfo, WorkEntryView } from "@/lib/types";
+import type { CompanyView, MonthRange } from "@/lib/types";
 import { formatDate, monthKey } from "@/lib/utils";
-import { WorkAccordion } from "./WorkAccordion";
-import { H1 } from "../typography/heading";
 
-function monthRange(startDate: Date, endDate?: Date | null) {
+import { H1 } from "../typography/heading";
+import { WorkAccordion } from "./WorkAccordion";
+import { WorkTimeline } from "./WorkTimeline";
+
+function monthRange(start: Date, end: Date | null): MonthRange {
   return {
-    startLabel: formatDate(startDate),
-    endLabel: formatDate(endDate),
-    startMonth: monthKey(startDate),
-    endMonth: endDate ? monthKey(endDate) : null,
+    startLabel: formatDate(start),
+    endLabel: formatDate(end),
+    startIso: monthKey(start),
+    endIso: end ? monthKey(end) : null,
   };
 }
 
-async function fetchWorkData(): Promise<CompanyWithInfo[]> {
+/** Companies newest first, each with its visible roles newest first. */
+async function fetchCompanies(): Promise<CompanyView[]> {
   const companies = await prisma.company.findMany({
-    include: {
+    select: {
+      name: true,
+      url: true,
+      image: true,
+      imageDark: true,
       workEntries: {
-        orderBy: {
-          startDate: "desc",
+        select: {
+          id: true,
+          team: true,
+          role: true,
+          description: true,
+          startDate: true,
+          endDate: true,
         },
-        where: {
-          visible: true,
-        },
+        where: { visible: true },
+        orderBy: { startDate: "desc" },
       },
     },
   });
 
-  const enhanced = companies
-    .filter((c) => c.workEntries.length > 0)
-    .map((company) => {
-      const startDate = company.workEntries.reduce(
-        (earliestDate, currentTeam) => {
-          const currentStartDate = new Date(currentTeam.startDate);
-          return currentStartDate < earliestDate
-            ? currentStartDate
-            : earliestDate;
-        },
-        new Date(company.workEntries[0].startDate),
-      );
-
-      const endDate = company.workEntries.some((team) => team.endDate === null)
-        ? undefined
-        : company.workEntries.reduce((latestDate, currentTeam) => {
-            if (currentTeam.endDate === null) {
-              return latestDate;
-            }
-            const currentEndDate = new Date(currentTeam.endDate);
-            return currentEndDate > latestDate ? currentEndDate : latestDate;
-          }, new Date(0));
-
-      return { company, startDate, endDate };
+  return companies
+    .filter((company) => company.workEntries.length > 0)
+    .map(({ workEntries, ...company }): CompanyView => {
+      const starts = workEntries.map((entry) => entry.startDate.getTime());
+      const ends = workEntries.map((entry) => entry.endDate);
+      // A still-open role means the whole tenure is still open.
+      const end = ends.every((date): date is Date => date !== null)
+        ? new Date(Math.max(...ends.map((date) => date.getTime())))
+        : null;
+      return {
+        ...company,
+        ...monthRange(new Date(Math.min(...starts)), end),
+        entries: workEntries.map(({ startDate, endDate, ...entry }) => ({
+          ...entry,
+          ...monthRange(startDate, endDate),
+        })),
+      };
     })
-    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
-
-  // Format every date here, on the server, so the client component only ever
-  // receives strings (see MonthRange in lib/types.ts).
-  return enhanced.map(({ company, startDate, endDate }) => {
-    const { createdAt: _companyCreatedAt, workEntries, ...rest } = company;
-    return {
-      ...rest,
-      ...monthRange(startDate, endDate),
-      workEntries: workEntries.map((entry): WorkEntryView => {
-        const {
-          startDate,
-          endDate,
-          createdAt: _entryCreatedAt,
-          ...entryRest
-        } = entry;
-        return { ...entryRest, ...monthRange(startDate, endDate) };
-      }),
-    };
-  });
-}
-
-function workItemDescriptionComponent(workItem: WorkEntryView) {
-  return <MarkDownTextWithLinebreaks text={workItem.description} />;
+    .sort((a, b) => b.startIso.localeCompare(a.startIso));
 }
 
 export default async function Work() {
-  const companies = await fetchWorkData();
-
-  const workItemDescriptionComponentMap = companies
-    .flatMap((c) => c.workEntries)
-    .reduce(
-      (acc: Record<number, React.ReactNode>, workItem) => ({
-        ...acc,
-        [workItem.id]: workItemDescriptionComponent(workItem),
-      }),
-      {},
-    );
+  const companies = await fetchCompanies();
   return (
     <div className="flex flex-col w-full gap-2">
       <H1>Work Experience</H1>
@@ -104,10 +74,9 @@ export default async function Work() {
           Download résumé (PDF)
         </a>
       </p>
-      <WorkAccordion
-        companies={companies}
-        workItemDescriptionComponentMap={workItemDescriptionComponentMap}
-      />
+      {/* Both layouts are in the HTML; CSS shows the one that fits. */}
+      <WorkAccordion companies={companies} className="md:hidden" />
+      <WorkTimeline companies={companies} className="hidden md:block" />
     </div>
   );
 }
