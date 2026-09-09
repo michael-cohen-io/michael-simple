@@ -26,8 +26,11 @@ export type Company = {
   name: string;
   /** The company's site, linked from its name. */
   url: string;
-  /** Path under public/ of the mark shown next to the name. */
-  logo: string;
+  /**
+   * Path under public/ of the mark shown next to the name. Leave it out and
+   * the company's initial is shown in its place.
+   */
+  logo?: string;
   /** A variant for the dark theme, when the light one does not read on it. */
   logoDark?: string;
   entries: Entry[];

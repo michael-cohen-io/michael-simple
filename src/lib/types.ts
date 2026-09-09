@@ -29,7 +29,8 @@ export type EntryView = MonthRange & {
 export type CompanyView = MonthRange & {
   name: string;
   url: string | null;
-  image: string;
+  /** null when the company has no mark; the initial is shown instead. */
+  image: string | null;
   imageDark: string | null;
   entries: EntryView[];
 };

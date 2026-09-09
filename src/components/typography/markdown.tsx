@@ -18,7 +18,7 @@ const linkClassName =
   "py-2 text-primary underline underline-offset-4 hover:decoration-2";
 
 const components: Components = {
-  p: ({ children }) => <p className="py-1">{children}</p>,
+  p: ({ children }) => <p>{children}</p>,
   // Only href and children are forwarded: nothing else from the source can
   // reach the DOM. Links to other sites open in a new tab and say so.
   a: ({ href, children }) => {

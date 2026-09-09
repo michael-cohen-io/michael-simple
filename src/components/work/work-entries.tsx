@@ -79,25 +79,40 @@ export function CompanyLogo({
   company,
   className,
 }: {
-  company: Pick<CompanyView, "image" | "imageDark">;
+  company: Pick<CompanyView, "name" | "image" | "imageDark">;
   className?: string;
 }) {
   const base = cn("h-8 w-8 shrink-0 rounded-full", className);
+  if (!company.image) {
+    // No mark for this company: its initial in a muted circle, so every row
+    // keeps the same shape.
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          base,
+          "inline-flex items-center justify-center bg-muted text-xs font-semibold text-muted-foreground",
+        )}
+      >
+        {company.name.charAt(0)}
+      </span>
+    );
+  }
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={company.image}
+        src={light}
         width={32}
         height={32}
         alt=""
         loading="lazy"
         className={cn(base, company.imageDark && "dark:hidden print:!block")}
       />
-      {company.imageDark && (
+      {dark && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={company.imageDark}
+          src={dark}
           width={32}
           height={32}
           alt=""
@@ -131,11 +146,13 @@ export function WorkEntryList({ entries }: { entries: EntryView[] }) {
               <DateRange {...entry} />
             </span>
           </div>
-          <div className="text-sm">
+          <ul className="list-disc space-y-1 pl-5 text-sm">
             {entry.bullets.map((bullet, index) => (
-              <Markdown key={index}>{bullet}</Markdown>
+              <li key={index}>
+                <Markdown>{bullet}</Markdown>
+              </li>
             ))}
-          </div>
+          </ul>
         </li>
       ))}
     </ul>
