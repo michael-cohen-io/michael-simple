@@ -27,6 +27,7 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run build` | Build the site into `out/` (plain files; serve them with any static server, e.g. `python3 -m http.server 3000 --directory out`) |
 | `bun run lint` | Run `next lint` (ESLint) |
 | `bun run typecheck` | Run `tsc --noEmit` |
+| `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
 | `bun run resume:pdf` | Build `public/MichaelCohenResume.pdf` from `resume.tex` |
 
 ## Licence
