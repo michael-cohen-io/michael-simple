@@ -1,0 +1,19 @@
+# Weekly dependency bumps. Dependabot reads bun.lock; minor and patch updates
+# arrive as one grouped PR, majors as their own so they can be staged.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
