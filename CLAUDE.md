@@ -9,4 +9,4 @@ One-page personal site: Next.js 14 (App Router, static export to `out/`), React 
 - Response headers and the `*.vercel.app` redirect are in `vercel.json`, not `next.config.mjs` (a static export ignores `headers()`/`redirects()`).
 - Keep the site's identity: one pink accent, Raleway, the `<MC>` mark, the timeline. Refine, don't redesign.
 - Before opening a PR run `bun run typecheck && bun run lint && bun run build && bun run test:e2e`; the build must produce `out/index.html` and fails on a malformed or empty work history. The smoke test (`tests/smoke.spec.ts`, Playwright, Chromium only) serves `out/` itself; CI (`.github/workflows/ci.yml`) runs the same four commands on every PR.
-- Serve a build locally with any static server, e.g. `python3 -m http.server 3000 --directory out`.
+- Serve a build locally with any static server, e.g. `python3 -m http.server 3000 --directory out`. The Vercel scripts (`Analytics`, `SpeedInsights`, the error beacon's `track`) only load on Vercel hosts (`isVercelHost` in `src/lib/site.ts`), so a local build makes no `/_vercel/` requests.

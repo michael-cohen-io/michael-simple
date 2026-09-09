@@ -30,6 +30,12 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
 | `bun run resume:pdf` | Build `public/MichaelCohenResume.pdf` from `resume.tex` |
 
+## Checks
+
+Every pull request runs [`ci.yml`](./.github/workflows/ci.yml): a frozen install, lint, typecheck, the build, and the smoke test in [`tests/smoke.spec.ts`](./tests/smoke.spec.ts), which loads the exported site and fails on any page error, a missing work history without JavaScript, a month that shifts with the visitor's timezone, or a missing crawler file. A second, advisory job runs `bun audit`. [Dependabot](./.github/dependabot.yml) opens one grouped PR a week for minor and patch bumps.
+
+In production, [Vercel Analytics](https://vercel.com/docs/analytics) counts page views and [Speed Insights](https://vercel.com/docs/speed-insights) collects Web Vitals; a small beacon reports uncaught browser errors as a `client-error` analytics event. All three are inert when the site is served from anywhere other than a Vercel host.
+
 ## Licence
 
 The code is MIT licensed (see [LICENSE](./LICENSE)). The photos, logos, résumé and personal text are not.

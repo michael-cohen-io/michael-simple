@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { isVercelHost } from "../src/lib/site";
+
 // The one-page site, built to out/ and served as files (see playwright.config.ts).
 // Each test guards a bug that has actually shipped: a hydration failure that
 // threw six page errors per visit for two years, a Work section that only
@@ -62,5 +64,37 @@ test("serves the crawler and sharing files", async ({ request }) => {
   for (const path of ["/robots.txt", "/sitemap.xml", "/opengraph-image"]) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
+  }
+});
+
+test("loads the Vercel scripts on the apex and nowhere else", async ({ page, baseURL }) => {
+  const localRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/_vercel/")) localRequests.push(request.url());
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  expect(localRequests).toEqual([]);
+
+  // The same files as if Vercel served them: every request to the apex is
+  // answered from the local server, except the platform scripts, which are
+  // recorded and refused (a 404 is what any other host would return).
+  const apexRequests: string[] = [];
+  await page.route("https://michaelcohen.io/**", async (route) => {
+    const { pathname, search } = new URL(route.request().url());
+    if (pathname.startsWith("/_vercel/")) {
+      apexRequests.push(pathname);
+      return route.fulfill({ status: 404 });
+    }
+    return route.fulfill({ response: await route.fetch({ url: `${baseURL}${pathname}${search}` }) });
+  });
+  await page.goto("https://michaelcohen.io/", { waitUntil: "networkidle" });
+  expect(apexRequests).toContain("/_vercel/insights/script.js");
+  expect(apexRequests).toContain("/_vercel/speed-insights/script.js");
+
+  for (const host of ["www.michaelcohen.io", "michael-simple-abc123.vercel.app"]) {
+    expect(isVercelHost(host), host).toBe(true);
+  }
+  for (const host of ["localhost", "michaelcohen.io.example.com", "vercel.app"]) {
+    expect(isVercelHost(host), host).toBe(false);
   }
 });

@@ -2,7 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Raleway } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
+import { ErrorBeacon } from "@/components/analytics/error-beacon";
+import { OnVercel } from "@/components/analytics/on-vercel";
 import Footer from "@/components/footer";
 import Header from "@/components/header/header";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
@@ -72,7 +75,14 @@ export default function RootLayout({
           </main>
           <Footer />
         </Providers>
-        <Analytics />
+        {/* Page views and field Web Vitals come from scripts that exist only
+            on Vercel's hosts; the beacon reports uncaught errors through the
+            first of them as a custom event, and stays silent elsewhere. */}
+        <OnVercel>
+          <Analytics />
+          <SpeedInsights />
+        </OnVercel>
+        <ErrorBeacon />
       </body>
     </html>
   );
