@@ -8,7 +8,8 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "db:migrate": "prisma migrate dev",
-    "lint": "next lint"
+    "lint": "next lint",
+    "resume:pdf": "node scripts/build-resume.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.3",
@@ -46,6 +47,7 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.2",
+    "playwright-core": "1.50.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
