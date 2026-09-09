@@ -34,21 +34,26 @@ export function CompanyLogo({
   className?: string;
 }) {
   const base = cn("h-8 w-8 shrink-0 rounded-full", className);
+  // A row whose image column is empty (or whitespace) has no mark to show;
+  // an <img src=" "> would otherwise request the page itself.
+  const light = company.image?.trim();
+  const dark = company.imageDark?.trim();
+  if (!light) return null;
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={company.image}
+        src={light}
         width={32}
         height={32}
         alt=""
         loading="lazy"
-        className={cn(base, company.imageDark && "dark:hidden print:!block")}
+        className={cn(base, dark && "dark:hidden print:!block")}
       />
-      {company.imageDark && (
+      {dark && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={company.imageDark}
+          src={dark}
           width={32}
           height={32}
           alt=""
