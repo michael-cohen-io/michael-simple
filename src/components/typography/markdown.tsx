@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ComponentPropsWithoutRef, Fragment, Suspense } from "react";
 
 const linkClassName =
-  "py-2 text-primary underline underline-offset-4 hover:text-primary/85";
+  "py-2 text-primary underline underline-offset-4 hover:decoration-2";
 
 const components = {
   p: ({ children }: ComponentPropsWithoutRef<"p">) => (

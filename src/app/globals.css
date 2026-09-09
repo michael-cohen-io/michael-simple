@@ -2,28 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * One pink accent. In light mode --primary is dark enough to be text on white
+ * (5.15:1); the surfaces are a four-stop tint ramp of the same hue so cards,
+ * rules and the code chip each read against the page rather than all sharing
+ * one value. Dark mode keeps the original light pink, which passes on near-black.
+ */
 @layer base {
   :root {
-    --background: 0 100% 100%;
+    --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
-    --card: 0 100% 100%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
-    --popover: 0 100% 100%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 330 100% 80%;
+    --primary: 330 100% 42%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 330 50% 90%;
+    --secondary: 330 45% 93%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 330 50% 90%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 330 40% 96%;
+    --muted-foreground: 0 0% 40%;
     --accent: 330 50% 90%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 330 50% 90%;
-    --input: 330 50% 90%;
-    --ring: 330 100% 80%;
-    --radius: 1rem;
+    --border: 330 35% 86%;
+    --input: 330 35% 86%;
+    --ring: 330 100% 42%;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -34,17 +40,17 @@
     --popover: 0 0% 7.1%;
     --popover-foreground: 0 0% 98%;
     --primary: 330 100% 80%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 330 30% 30%;
+    --primary-foreground: 330 40% 12%;
+    --secondary: 330 18% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 330 30% 30%;
+    --muted: 330 15% 14%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 330 30% 30%;
+    --accent: 330 25% 24%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 330 30% 30%;
-    --input: 330 30% 30%;
+    --border: 330 20% 26%;
+    --input: 330 20% 26%;
     --ring: 330 100% 80%;
   }
 }
@@ -55,14 +61,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-/* The header is fixed from md up (about 196px tall), so focus- and
-   anchor-driven scrolling must leave room for it or land underneath. */
-@media (min-width: 768px) {
-  html {
-    scroll-padding-top: 13rem;
   }
 }
 
