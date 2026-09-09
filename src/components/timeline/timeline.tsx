@@ -43,7 +43,7 @@ const TimelineTime = React.forwardRef<
   <p
     ref={ref}
     className={cn(
-      "col-start-2 row-start-2 pt-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary",
+      "col-start-2 row-start-2 pt-1 text-sm font-semibold text-muted-foreground",
       "md:col-start-1 md:row-start-1 md:self-center md:whitespace-nowrap md:pt-0 md:text-right",
       className,
     )}
@@ -100,7 +100,7 @@ const TimelineTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight text-foreground",
+      "font-semibold leading-none tracking-tight text-secondary-foreground",
       className,
     )}
     {...props}
