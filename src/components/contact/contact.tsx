@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { H1 } from "../typography/heading";
+import { SectionHeading } from "../typography/heading";
 
 type ContactItem = {
   name: string;
@@ -35,7 +35,7 @@ const contactItems: ContactItem[] = [
 export default function Contact() {
   return (
     <div className="flex flex-col w-full gap-2">
-      <H1>Connect</H1>
+      <SectionHeading id="connect-heading">Connect</SectionHeading>
       <div className="flex flex-col gap-1">
         {contactItems.map((item) => (
           <span

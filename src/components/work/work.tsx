@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import type { CompanyView, MonthRange } from "@/lib/types";
 import { formatDate, monthKey } from "@/lib/utils";
 
-import { H1 } from "../typography/heading";
+import { SectionHeading } from "../typography/heading";
 import { WorkAccordion } from "./WorkAccordion";
 import { WorkTimeline } from "./WorkTimeline";
 
@@ -63,7 +63,7 @@ export default async function Work() {
   const companies = await fetchCompanies();
   return (
     <div className="flex flex-col w-full gap-2">
-      <H1>Work Experience</H1>
+      <SectionHeading id="work-heading">Work Experience</SectionHeading>
       <p className="text-sm font-light">
         Prefer the classic format?{" "}
         <a

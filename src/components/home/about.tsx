@@ -3,7 +3,7 @@
 
 export default function About() {
   return (
-    <div className="flex justify-center">
+    <div className="flex w-full justify-center">
       <div className="flex justify-center content-center flex-col w-full px-1 xl:px-0 text-2xl">
         <div>
           <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold">
