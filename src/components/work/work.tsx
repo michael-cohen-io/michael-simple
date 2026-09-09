@@ -1,67 +1,16 @@
-import prisma from "@/lib/prisma";
+import { companies } from "@/content/work";
 import { RESUME } from "@/lib/site";
-import type { CompanyView, MonthRange } from "@/lib/types";
-import { formatDate, monthKey } from "@/lib/utils";
+import { companyViews } from "@/lib/work";
 
 import { SectionHeading } from "../typography/heading";
 import { WorkAccordion } from "./WorkAccordion";
 import { WorkTimeline } from "./WorkTimeline";
 
-function monthRange(start: Date, end: Date | null): MonthRange {
-  return {
-    startLabel: formatDate(start),
-    endLabel: formatDate(end),
-    startIso: monthKey(start),
-    endIso: end ? monthKey(end) : null,
-  };
-}
+// Derived once, when the module is evaluated during the build: a content
+// mistake throws here and fails the build rather than shipping a blank section.
+const work = companyViews(companies);
 
-/** Companies newest first, each with its visible roles newest first. */
-async function fetchCompanies(): Promise<CompanyView[]> {
-  const companies = await prisma.company.findMany({
-    select: {
-      name: true,
-      url: true,
-      image: true,
-      imageDark: true,
-      workEntries: {
-        select: {
-          id: true,
-          team: true,
-          role: true,
-          description: true,
-          startDate: true,
-          endDate: true,
-        },
-        where: { visible: true },
-        orderBy: { startDate: "desc" },
-      },
-    },
-  });
-
-  return companies
-    .filter((company) => company.workEntries.length > 0)
-    .map(({ workEntries, ...company }): CompanyView => {
-      const starts = workEntries.map((entry) => entry.startDate.getTime());
-      const ends = workEntries.map((entry) => entry.endDate);
-      // A still-open role means the whole tenure is still open.
-      const end = ends.every((date): date is Date => date !== null)
-        ? new Date(Math.max(...ends.map((date) => date.getTime())))
-        : null;
-      return {
-        ...company,
-        ...monthRange(new Date(Math.min(...starts)), end),
-        entries: workEntries.map(({ startDate, endDate, ...entry }) => ({
-          ...entry,
-          ...monthRange(startDate, endDate),
-        })),
-      };
-    })
-    .sort((a, b) => b.startIso.localeCompare(a.startIso));
-}
-
-export default async function Work() {
-  const companies = await fetchCompanies();
+export default function Work() {
   return (
     <section
       aria-labelledby="work-heading"
@@ -79,8 +28,8 @@ export default async function Work() {
         </a>
       </p>
       {/* Both layouts are in the HTML; CSS shows the one that fits. */}
-      <WorkAccordion companies={companies} className="md:hidden" />
-      <WorkTimeline companies={companies} className="hidden md:block" />
+      <WorkAccordion companies={work} className="md:hidden" />
+      <WorkTimeline companies={work} className="hidden md:block" />
     </section>
   );
 }

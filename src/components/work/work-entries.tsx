@@ -1,4 +1,4 @@
-import MarkDownTextWithLinebreaks from "@/components/typography/markdown";
+import { Markdown } from "@/components/typography/markdown";
 import type { CompanyView, EntryView, MonthRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -118,7 +118,10 @@ export function WorkEntryList({ entries }: { entries: EntryView[] }) {
   return (
     <ul className="divide-y">
       {entries.map((entry) => (
-        <li key={entry.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
+        <li
+          key={`${entry.role} ${entry.startIso}`}
+          className="space-y-2 py-4 first:pt-0 last:pb-0"
+        >
           <h4 className="text-base font-medium leading-none tracking-tight">
             {entry.team}
           </h4>
@@ -129,7 +132,9 @@ export function WorkEntryList({ entries }: { entries: EntryView[] }) {
             </span>
           </div>
           <div className="text-sm">
-            <MarkDownTextWithLinebreaks text={entry.description} />
+            {entry.bullets.map((bullet, index) => (
+              <Markdown key={index}>{bullet}</Markdown>
+            ))}
           </div>
         </li>
       ))}

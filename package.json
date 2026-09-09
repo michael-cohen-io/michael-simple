@@ -8,15 +8,13 @@
   "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "prisma migrate dev",
     "resume:pdf": "node scripts/build-resume.mjs"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
@@ -25,10 +23,10 @@
     "clsx": "^2.1.0",
     "lucide-react": "^0.372.0",
     "next": "14.2.35",
-    "next-mdx-remote": "^4.4.1",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
   },
@@ -40,7 +38,6 @@
     "eslint-config-next": "14.2.35",
     "playwright-core": "1.50.0",
     "postcss": "^8",
-    "prisma": "^5.12.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

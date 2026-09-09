@@ -1,10 +1,10 @@
 /**
  * View models for the Work section.
  *
- * They are built on the server from the database rows (see
- * components/work/work.tsx) so the components only ever deal with plain
- * strings: every date is formatted there, in UTC, and no Date object reaches
- * the render tree where a visitor's timezone could shift it by a month.
+ * They are derived from content/work.ts by lib/work.ts at build time so the
+ * components only ever deal with plain strings: every date is formatted
+ * there, and no Date object reaches the render tree where a visitor's
+ * timezone could shift it by a month.
  */
 export type MonthRange = {
   /** e.g. "Aug 2024" */
@@ -19,11 +19,10 @@ export type MonthRange = {
 
 /** One role held at a company. */
 export type EntryView = MonthRange & {
-  id: number;
   team: string;
   role: string;
-  /** Markdown; `\n` sequences separate paragraphs. */
-  description: string;
+  /** One paragraph of Markdown per item. */
+  bullets: string[];
 };
 
 /** A company with its roles, newest first, and the span they cover. */
