@@ -191,10 +191,10 @@
       "has": [
         {
           "type": "host",
-          "value": "(.*)\\.vercel\\.app"
+          "value": "^michael-website(-my-team-ab1503ca)?\\.vercel\\.app$"
         }
       ],
-      "destination": "https://michaelcohen.io/:path*",
+      "destination": "https://www.michaelcohen.io/:path*",
       "permanent": true
     }
   ]
