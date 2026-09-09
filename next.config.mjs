@@ -86,11 +86,20 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // The *.vercel.app alias must not become a second, indexable copy.
+      // The production *.vercel.app aliases must not become a second,
+      // indexable copy of the site. Only those two hosts are matched: preview
+      // deployments (michael-website-<hash>-… and michael-website-git-<branch>-…)
+      // have to keep serving themselves, or every preview and its assets
+      // would bounce to production. www is the host production answers on.
       {
         source: "/:path*",
-        has: [{ type: "host", value: "(.*)\\.vercel\\.app" }],
-        destination: "https://michaelcohen.io/:path*",
+        has: [
+          {
+            type: "host",
+            value: "^michael-website(-my-team-ab1503ca)?\\.vercel\\.app$",
+          },
+        ],
+        destination: "https://www.michaelcohen.io/:path*",
         permanent: true,
       },
     ];
