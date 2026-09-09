@@ -9,10 +9,9 @@ import type { CompanyView } from "@/lib/types";
 import { CompanyLogo, DateRange, WorkEntryList } from "./work-entries";
 
 /**
- * The narrow layout: one panel per company, exactly one open at a time and the
- * most recent open by default, so the section is never reduced to three bare
- * rows. Everything inside is rendered on the server; only the Radix accordion
- * itself runs on the client.
+ * The narrow layout: one collapsible panel per company, at most one open at a
+ * time and the most recent open by default. Everything inside is rendered on
+ * the server; only the Radix accordion itself runs on the client.
  */
 export function WorkAccordion({
   companies,
@@ -24,6 +23,7 @@ export function WorkAccordion({
   return (
     <Accordion
       type="single"
+      collapsible
       defaultValue={companies[0]?.name}
       className={className}
     >
