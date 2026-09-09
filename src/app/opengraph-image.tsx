@@ -37,7 +37,6 @@ export default async function OpenGraphImage() {
           color: "#fafafa",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={portraitSrc}
           alt=""
