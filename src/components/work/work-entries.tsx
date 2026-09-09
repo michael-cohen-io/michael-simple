@@ -18,6 +18,55 @@ export function DateRange({
   );
 }
 
+/** Says the link leaves the site; every external link on the page does this. */
+function NewTab() {
+  return <span className="sr-only"> (opens in new tab)</span>;
+}
+
+/** The company name, linked to its site when the row has one. */
+export function CompanyName({
+  company,
+}: {
+  company: Pick<CompanyView, "name" | "url">;
+}) {
+  if (!company.url) return <>{company.name}</>;
+  return (
+    <a
+      href={company.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline-offset-4 hover:underline"
+    >
+      {company.name}
+      <NewTab />
+    </a>
+  );
+}
+
+/** The company's site as a small "anthropic.com" line; nothing without a URL. */
+export function CompanySiteLink({
+  company,
+  className,
+}: {
+  company: Pick<CompanyView, "name" | "url">;
+  className?: string;
+}) {
+  if (!company.url) return null;
+  return (
+    <p className={cn("text-xs", className)}>
+      <a
+        href={company.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block py-2 text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
+      >
+        {new URL(company.url).hostname.replace(/^www\./, "")}
+        <NewTab />
+      </a>
+    </p>
+  );
+}
+
 /**
  * Company mark. When a dark variant exists both are in the HTML and CSS picks
  * one, so the right mark shows in either theme before any JavaScript runs.

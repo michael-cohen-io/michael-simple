@@ -10,7 +10,12 @@ import {
 import { Card } from "@/components/ui/card";
 import type { CompanyView } from "@/lib/types";
 
-import { CompanyLogo, DateRange, WorkEntryList } from "./work-entries";
+import {
+  CompanyLogo,
+  CompanyName,
+  DateRange,
+  WorkEntryList,
+} from "./work-entries";
 
 /** The wide layout: one timeline item per company with a card of its roles. */
 export function WorkTimeline({
@@ -30,7 +35,9 @@ export function WorkTimeline({
           <TimelineSpine />
           <TimelineHeader>
             <CompanyLogo company={company} />
-            <TimelineTitle>{company.name}</TimelineTitle>
+            <TimelineTitle>
+              <CompanyName company={company} />
+            </TimelineTitle>
           </TimelineHeader>
           <TimelineContent>
             <Card>

@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { RESUME } from "@/lib/site";
 import type { CompanyView, MonthRange } from "@/lib/types";
 import { formatDate, monthKey } from "@/lib/utils";
 
@@ -68,13 +69,13 @@ export default async function Work() {
     >
       <SectionHeading id="work-heading">Work Experience</SectionHeading>
       <p className="text-sm font-light">
-        Prefer the classic format?{" "}
+        Prefer a one-pager?{" "}
         <a
-          href="/MichaelCohenResume.pdf"
-          download="Michael Cohen - Resume.pdf"
+          href={RESUME.href}
+          download={RESUME.download}
           className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
-          Download résumé (PDF)
+          Download the résumé (PDF, updated {RESUME.updated})
         </a>
       </p>
       {/* Both layouts are in the HTML; CSS shows the one that fits. */}

@@ -6,7 +6,12 @@ import {
 } from "@/components/ui/accordion";
 import type { CompanyView } from "@/lib/types";
 
-import { CompanyLogo, DateRange, WorkEntryList } from "./work-entries";
+import {
+  CompanyLogo,
+  CompanySiteLink,
+  DateRange,
+  WorkEntryList,
+} from "./work-entries";
 
 /**
  * The narrow layout: one collapsible panel per company, at most one open at a
@@ -41,6 +46,8 @@ export function WorkAccordion({
             </span>
           </AccordionTrigger>
           <AccordionContent className="pt-1">
+            {/* The trigger is a button, so the company's site is linked here. */}
+            <CompanySiteLink company={company} className="mb-3" />
             <WorkEntryList entries={company.entries} />
           </AccordionContent>
         </AccordionItem>
