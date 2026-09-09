@@ -29,6 +29,9 @@ export default function Header() {
               width={80}
               height={80}
               priority
+              // Next 15 no longer derives the hint from `priority`; keep the
+              // preload and the img at high priority as before.
+              fetchPriority="high"
               sizes="(min-width: 768px) 80px, 64px"
               className="h-full w-full rounded-full object-cover transition-[filter] duration-300 md:grayscale md:group-hover:grayscale-0"
             />
