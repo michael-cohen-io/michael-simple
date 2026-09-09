@@ -34,7 +34,10 @@ const contactItems: ContactItem[] = [
 
 export default function Contact() {
   return (
-    <div className="flex flex-col w-full gap-2">
+    <section
+      aria-labelledby="connect-heading"
+      className="flex flex-col w-full gap-2"
+    >
       <SectionHeading id="connect-heading">Connect</SectionHeading>
       <div className="flex flex-col gap-1">
         {contactItems.map((item) => (
@@ -59,6 +62,6 @@ export default function Contact() {
           </span>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

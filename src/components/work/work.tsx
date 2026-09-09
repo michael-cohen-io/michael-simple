@@ -62,7 +62,10 @@ async function fetchCompanies(): Promise<CompanyView[]> {
 export default async function Work() {
   const companies = await fetchCompanies();
   return (
-    <div className="flex flex-col w-full gap-2">
+    <section
+      aria-labelledby="work-heading"
+      className="flex flex-col w-full gap-2"
+    >
       <SectionHeading id="work-heading">Work Experience</SectionHeading>
       <p className="text-sm font-light">
         Prefer the classic format?{" "}
@@ -77,6 +80,6 @@ export default async function Work() {
       {/* Both layouts are in the HTML; CSS shows the one that fits. */}
       <WorkAccordion companies={companies} className="md:hidden" />
       <WorkTimeline companies={companies} className="hidden md:block" />
-    </div>
+    </section>
   );
 }

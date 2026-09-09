@@ -13,7 +13,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "md:fixed md:top-0 md:left-0 md:right-0 mx-auto max-w-3xl flex md:px-8 items-center z-50 transition-colors",
+        "md:fixed md:top-0 md:left-0 md:right-0 mx-auto max-w-3xl flex px-8 items-center z-50 transition-colors",
         scrolled ? "md:border-b md:backdrop-blur-xl" : "bg-transparent",
       )}
     >

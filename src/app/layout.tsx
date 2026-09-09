@@ -27,9 +27,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(font.className)}>
         <Providers>
-          <main className="mx-auto px-8 max-w-3xl">
-            <Header />
-            <div>{children}</div>
+          {/* First in tab order; visible only while focused. */}
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:font-medium focus:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            Skip to content
+          </a>
+          <Header />
+          <main id="main" className="mx-auto px-8 max-w-3xl">
+            {children}
           </main>
           <Footer />
         </Providers>
