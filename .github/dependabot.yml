@@ -1,8 +1,10 @@
-# Weekly dependency bumps. Dependabot reads bun.lock; minor and patch updates
-# arrive as one grouped PR, majors as their own so they can be staged.
+# Weekly dependency bumps. The bun ecosystem updates package.json and bun.lock
+# together (the npm ecosystem would leave bun.lock stale and fail the frozen
+# install in CI); minor and patch updates arrive as one grouped PR, majors as
+# their own so they can be staged.
 version: 2
 updates:
-  - package-ecosystem: npm
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
