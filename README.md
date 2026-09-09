@@ -4,7 +4,7 @@ The source of [michaelcohen.io](https://michaelcohen.io), a one-page personal si
 
 ## Stack
 
-- [Next.js 14](https://nextjs.org/) (App Router, React Server Components) as a static export: `next build` writes the whole site to `out/`
+- [Next.js 15](https://nextjs.org/) (App Router, React 19, React Server Components) as a static export: `next build` writes the whole site to `out/`
 - [Tailwind CSS](https://tailwindcss.com/) and a few [shadcn/ui](https://ui.shadcn.com/) primitives (Radix accordion, separator, slot)
 - The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time
 - [Raleway](https://fonts.google.com/specimen/Raleway) self-hosted through `next/font`
@@ -25,14 +25,14 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | --- | --- |
 | `bun run dev` | Start the development server |
 | `bun run build` | Build the site into `out/` (plain files; serve them with any static server, e.g. `python3 -m http.server 3000 --directory out`) |
-| `bun run lint` | Run `next lint` (ESLint) |
+| `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
 | `bun run resume:pdf` | Build `public/MichaelCohenResume.pdf` from `resume.tex` |
 
 ## Checks
 
-Every pull request runs [`ci.yml`](./.github/workflows/ci.yml): a frozen install, lint, typecheck, the build, and the smoke test in [`tests/smoke.spec.ts`](./tests/smoke.spec.ts), which loads the exported site and fails on any page error, a missing work history without JavaScript, a month that shifts with the visitor's timezone, or a missing crawler file. A second, advisory job runs `bun audit`. [Dependabot](./.github/dependabot.yml) opens one grouped PR a week for minor and patch bumps.
+Every pull request runs [`ci.yml`](./.github/workflows/ci.yml): a frozen install, lint, typecheck, the build, and the smoke test in [`tests/smoke.spec.ts`](./tests/smoke.spec.ts), which loads the exported site and fails on any page error, a missing work history without JavaScript, a month that shifts with the visitor's timezone, or a missing crawler file. A second job runs `bun audit --audit-level=high` and fails on any high or critical advisory. [Dependabot](./.github/dependabot.yml) opens one grouped PR a week for minor and patch bumps.
 
 In production, [Vercel Analytics](https://vercel.com/docs/analytics) counts page views and [Speed Insights](https://vercel.com/docs/speed-insights) collects Web Vitals; a small beacon reports uncaught browser errors as a `client-error` analytics event. All three are inert when the site is served from anywhere other than a Vercel host.
 

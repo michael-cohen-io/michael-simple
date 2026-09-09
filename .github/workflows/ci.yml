@@ -39,10 +39,9 @@ jobs:
     name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Advisory only for now: the remaining advisories are in the ESLint and
-    # Tailwind dev chain until PRs 09-11 replace them. Drop continue-on-error
-    # once `bun audit --audit-level=high` is clean.
-    continue-on-error: true
+    # Blocking: the audit is clean since the Next 15 / ESLint 9 upgrade. The
+    # `overrides.postcss` entry in package.json covers next's exact postcss
+    # pin; it can go with the Next 16 upgrade, which pins a patched version.
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
