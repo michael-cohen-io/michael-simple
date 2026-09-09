@@ -46,7 +46,7 @@ function companyView(company: Company): CompanyView {
   return {
     name: company.name,
     url: company.url,
-    image: company.logo,
+    image: company.logo ?? null,
     imageDark: company.logoDark ?? null,
     ...monthRange(start, end),
     entries: entries.map(entryView),
