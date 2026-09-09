@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="w-full py-5 text-center">
+    <footer className="mt-16 w-full py-8 text-center">
       <p className="text-base text-muted-foreground">
         Built with 🤍 by{" "}
         <a
