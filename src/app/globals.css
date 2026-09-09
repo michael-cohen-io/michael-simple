@@ -75,3 +75,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* On paper: black on white, no theme toggle or skip link, external link
+   targets written out, and no card split across two pages. */
+@media print {
+  :root,
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --muted: 0 0% 100%;
+    --muted-foreground: 0 0% 25%;
+    --secondary: 0 0% 100%;
+    --accent: 0 0% 100%;
+    --border: 0 0% 60%;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-weight: 400;
+    word-break: break-all;
+  }
+}

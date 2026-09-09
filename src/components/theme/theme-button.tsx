@@ -31,7 +31,7 @@ export default function ThemeButton({ className }: { className?: string }) {
     <Button
       variant="ghost"
       className={cn(
-        "h-11 w-11 rounded-full p-0 text-foreground hover:text-muted-foreground",
+        "h-11 w-11 rounded-full p-0 text-foreground hover:text-muted-foreground print:hidden",
         className,
       )}
       aria-label={label}
