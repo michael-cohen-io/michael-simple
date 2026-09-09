@@ -21,8 +21,10 @@ export function DateRange({
 /**
  * Company mark. When a dark variant exists both are in the HTML and CSS picks
  * one, so the right mark shows in either theme before any JavaScript runs.
- * The marks are SVGs, which next/image would pass through untouched anyway,
- * so plain <img> tags keep them out of the client bundle.
+ * On paper the light mark is always the one shown; its print utilities are
+ * important because the dark: rules are more specific. The marks are SVGs,
+ * which next/image would pass through untouched anyway, so plain <img> tags
+ * keep them out of the client bundle.
  */
 export function CompanyLogo({
   company,
@@ -41,7 +43,7 @@ export function CompanyLogo({
         height={32}
         alt=""
         loading="lazy"
-        className={cn(base, company.imageDark && "dark:hidden")}
+        className={cn(base, company.imageDark && "dark:hidden print:!block")}
       />
       {company.imageDark && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -51,7 +53,7 @@ export function CompanyLogo({
           height={32}
           alt=""
           loading="lazy"
-          className={cn(base, "hidden dark:block")}
+          className={cn(base, "hidden dark:block print:!hidden")}
         />
       )}
     </>
