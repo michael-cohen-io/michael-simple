@@ -2,6 +2,8 @@
 
 import { track } from "@vercel/analytics";
 
+import { isVercelHost } from "@/lib/site";
+
 // Counts uncaught client errors as a Vercel Analytics event. It is a count
 // with a message, not a stack trace, but it is enough to notice that a deploy
 // started throwing, which nothing did while a hydration error shipped for two
@@ -9,13 +11,22 @@ import { track } from "@vercel/analytics";
 
 const MAX_LENGTH = 200;
 
+type Queue = { va?: (...args: unknown[]) => void; vaq?: unknown[][] };
+
 function describe(reason: unknown): string {
-  const message =
-    reason instanceof Error
-      ? reason.message
-      : typeof reason === "string"
-        ? reason
-        : JSON.stringify(reason) ?? String(reason);
+  let message: string;
+  if (reason instanceof Error) {
+    message = reason.message;
+  } else if (typeof reason === "string") {
+    message = reason;
+  } else {
+    try {
+      message = JSON.stringify(reason) ?? String(reason);
+    } catch {
+      // Circular or otherwise unserialisable rejection reasons.
+      message = String(reason);
+    }
+  }
   return message.slice(0, MAX_LENGTH);
 }
 
@@ -39,6 +50,17 @@ function onRejection(event: PromiseRejectionEvent) {
 // reported before any effect runs, so an effect would miss the failure this
 // beacon exists to catch. The guard keeps the module inert during SSR.
 if (typeof window !== "undefined") {
+  // track() is `window.va?.(...)`, and window.va only exists once <Analytics>
+  // has run its effect, which is after hydration. Creating the same queue the
+  // script's loader would create keeps everything reported before then; the
+  // loader sees the queue, leaves it alone, and the script drains it. Only on
+  // Vercel's hosts, so a local preview does not accumulate a queue for nothing.
+  const w = window as unknown as Queue;
+  if (isVercelHost(window.location.hostname)) {
+    w.va ??= (...args: unknown[]) => {
+      (w.vaq ??= []).push(args);
+    };
+  }
   window.addEventListener("error", onError);
   window.addEventListener("unhandledrejection", onRejection);
 }
