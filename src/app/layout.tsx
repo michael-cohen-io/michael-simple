@@ -65,12 +65,12 @@ export default function RootLayout({
           {/* First in tab order; visible only while focused. */}
           <a
             href="#main"
-            className="sr-only print:hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:font-medium focus:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="sr-only print:hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-60 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:font-medium focus:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
           >
             Skip to content
           </a>
           <Header />
-          <main id="main" tabIndex={-1} className="mx-auto px-8 max-w-3xl outline-none">
+          <main id="main" tabIndex={-1} className="mx-auto px-8 max-w-3xl outline-hidden">
             {children}
           </main>
           <Footer />

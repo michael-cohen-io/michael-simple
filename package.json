@@ -34,6 +34,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
     "@playwright/test": "^1.56.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.20.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -41,7 +42,7 @@
     "eslint-config-next": "^15.5.25",
     "playwright-core": "^1.56.1",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   },
   "overrides": {

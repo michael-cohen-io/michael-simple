@@ -92,7 +92,7 @@ export function CompanyLogo({
         height={32}
         alt=""
         loading="lazy"
-        className={cn(base, company.imageDark && "dark:hidden print:!block")}
+        className={cn(base, company.imageDark && "dark:hidden print:block!")}
       />
       {company.imageDark && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +102,7 @@ export function CompanyLogo({
           height={32}
           alt=""
           loading="lazy"
-          className={cn(base, "hidden dark:block print:!hidden")}
+          className={cn(base, "hidden dark:block print:hidden!")}
         />
       )}
     </>
