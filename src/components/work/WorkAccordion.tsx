@@ -63,10 +63,15 @@ function CompanyLogo({
   className?: string;
 }) {
   const base = cn("h-8 w-8 shrink-0 rounded-full", className);
-  if (!company.imageDark) {
+  // A row whose image column is empty (or whitespace) has no mark to show;
+  // next/image would otherwise request /_next/image?url=%20 and get a 400.
+  const light = company.image?.trim();
+  const dark = company.imageDark?.trim();
+  if (!light) return null;
+  if (!dark) {
     return (
       <Image
-        src={company.image}
+        src={light}
         alt=""
         width={32}
         height={32}
@@ -77,14 +82,14 @@ function CompanyLogo({
   return (
     <>
       <Image
-        src={company.image}
+        src={light}
         alt=""
         width={32}
         height={32}
         className={cn(base, "dark:hidden")}
       />
       <Image
-        src={company.imageDark}
+        src={dark}
         alt=""
         width={32}
         height={32}
