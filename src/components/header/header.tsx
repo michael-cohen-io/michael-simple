@@ -30,7 +30,7 @@ export default function Header() {
               height={80}
               priority
               sizes="(min-width: 768px) 80px, 64px"
-              className="h-full w-full rounded-full object-cover grayscale transition-[filter] duration-300 group-hover:grayscale-0"
+              className="h-full w-full rounded-full object-cover transition-[filter] duration-300 md:grayscale md:group-hover:grayscale-0"
             />
           </div>
         </Link>
