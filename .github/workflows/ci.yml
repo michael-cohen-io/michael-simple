@@ -39,9 +39,7 @@ jobs:
     name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Blocking: the audit is clean since the Next 15 / ESLint 9 upgrade. The
-    # `overrides.postcss` entry in package.json covers next's exact postcss
-    # pin; it can go with the Next 16 upgrade, which pins a patched version.
+    # Blocking: the audit has been clean since the Next 15 / ESLint 9 upgrade.
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

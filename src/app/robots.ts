@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/lib/site";
 
-// Next 15 builds robots.txt as a route handler, and route handlers are
+// Next builds robots.txt as a route handler, and route handlers are
 // dynamic by default; a static export needs it declared static.
 export const dynamic = "force-static";
 

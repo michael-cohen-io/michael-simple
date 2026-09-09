@@ -8,7 +8,7 @@ import { SITE_TITLE } from "@/lib/site";
 export const alt = SITE_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-// Next 15 builds the image as a route handler, and route handlers are
+// Next builds the image as a route handler, and route handlers are
 // dynamic by default; a static export needs it declared static.
 export const dynamic = "force-static";
 
