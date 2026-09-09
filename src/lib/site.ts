@@ -1,9 +1,10 @@
 /**
  * Facts about the site that more than one file needs. Every absolute URL in
  * the metadata, robots.txt and the sitemap is derived from SITE_URL, so the
- * host is decided in exactly one place: the apex, without a trailing slash.
+ * host is decided in exactly one place. Production answers on the www host
+ * (the apex 308s to it on Vercel), so that is the canonical origin.
  */
-export const SITE_URL = "https://michaelcohen.io";
+export const SITE_URL = "https://www.michaelcohen.io";
 
 export const SITE_NAME = "Michael Cohen";
 
