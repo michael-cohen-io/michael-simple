@@ -33,7 +33,7 @@ export function WorkAccordion({
             <span className="flex items-center gap-3 text-left">
               <CompanyLogo company={company} />
               <span className="flex flex-col items-start gap-1">
-                <span className="font-semibold">{company.name}</span>
+                <span className="text-lg font-semibold">{company.name}</span>
                 <span className="text-xs font-normal text-muted-foreground">
                   <DateRange {...company} />
                 </span>

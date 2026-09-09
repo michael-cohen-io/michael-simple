@@ -42,7 +42,7 @@ export default function Header() {
         <div className="flex justify-end">
           <ThemeButton />
         </div>
-        <h1 className="text-xl font-semibold">Michael Cohen</h1>
+        <h1 className="text-3xl font-semibold">Michael Cohen</h1>
       </div>
     </header>
   );

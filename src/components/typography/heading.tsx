@@ -13,7 +13,7 @@ export function SectionHeading({
   children: ReactNode;
 }) {
   return (
-    <h2 id={id} className="font-semibold">
+    <h2 id={id} className="text-2xl font-semibold">
       {children}
     </h2>
   );

@@ -68,7 +68,7 @@ export function WorkEntryList({ entries }: { entries: EntryView[] }) {
     <ul className="divide-y">
       {entries.map((entry) => (
         <li key={entry.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
-          <h4 className="text-lg font-semibold leading-none tracking-tight">
+          <h4 className="text-base font-medium leading-none tracking-tight">
             {entry.team}
           </h4>
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-sm text-muted-foreground">
