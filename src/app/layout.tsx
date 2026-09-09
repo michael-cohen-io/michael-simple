@@ -35,7 +35,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <Header />
-          <main id="main" className="mx-auto px-8 max-w-3xl">
+          <main id="main" tabIndex={-1} className="mx-auto px-8 max-w-3xl outline-none">
             {children}
           </main>
           <Footer />

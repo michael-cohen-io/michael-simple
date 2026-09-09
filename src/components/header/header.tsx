@@ -17,7 +17,7 @@ export default function Header() {
         scrolled ? "md:border-b md:backdrop-blur-xl" : "bg-transparent",
       )}
     >
-      <div className="w-full grid grid-cols-[90px_1fr] grid-rows-[auto_5rem] gap-2 py-8 justify-between items-center">
+      <div className="w-full grid grid-cols-[90px_1fr] grid-rows-[auto_5rem] gap-2 py-8 items-center">
         <Link
           href="/"
           aria-label="Michael Cohen, home"
