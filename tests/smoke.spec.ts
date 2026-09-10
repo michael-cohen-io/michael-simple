@@ -222,9 +222,36 @@ test("keeps the accent readable on both grounds and tells the browser the theme"
 
   await page.getByRole("button", { name: /theme/i }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
-  const dark = await contrast();
-  expect(dark.scheme).toBe("dark");
-  expect(dark.ratio).toBeGreaterThanOrEqual(4.5);
+  // The link colour transitions for 150ms after the switch; poll past it.
+  await expect.poll(async () => (await contrast()).scheme).toBe("dark");
+  await expect.poll(async () => (await contrast()).ratio).toBeGreaterThanOrEqual(4.5);
+});
+
+test("sets the name above the hero on the type scale, with tabular dates", async ({ page }) => {
+  const sizes = async () =>
+    page.evaluate(() => {
+      const px = (el: Element | null) => parseFloat(getComputedStyle(el!).fontSize);
+      return {
+        name: px(document.querySelector("h1")),
+        mark: px(document.querySelector("header a span")),
+        hero: px(document.querySelector("main p")),
+        heading: px(document.querySelector("main h2")),
+        dates: getComputedStyle(document.querySelector("main time")!).fontVariantNumeric,
+        memoji: (document.querySelector('header img[src="/memoji.webp"]') as HTMLImageElement | null)?.alt,
+      };
+    });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const desktop = await sizes();
+  expect(desktop.name).toBeGreaterThan(desktop.mark);
+  expect(desktop.name).toBeGreaterThan(desktop.hero);
+  expect(desktop.hero).toBeLessThan(desktop.heading);
+  expect(desktop.dates).toContain("tabular-nums");
+  expect(desktop.memoji).toBe("");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const phone = await sizes();
+  expect(phone.name).toBeGreaterThan(phone.hero);
+  expect(phone.name).toBeGreaterThanOrEqual(phone.mark);
 });
 
 test("has one h1 and alt text on every image", async ({ page }) => {

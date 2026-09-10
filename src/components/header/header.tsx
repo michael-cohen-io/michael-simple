@@ -25,7 +25,11 @@ export default function Header() {
           <span aria-hidden="true" className="font-mono text-3xl font-semibold leading-none text-primary">
             {"<mc>"}
           </span>
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
+          {/* On a desktop the portrait rests in grayscale; hovering the mark
+              or the photo rings it in the accent and fades in the memoji from
+              the 404 page, so the person and the character are one identity.
+              Phones have no hover and keep the colour photo. */}
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full ring-primary ring-offset-2 ring-offset-background transition-shadow duration-300 md:h-20 md:w-20 md:group-hover:ring-2 motion-reduce:transition-none">
             {/* A plain img with its own srcset: the export cannot resize
                 images, so the two sizes are files in public/. 160px covers
                 2× on both breakpoints; 320px is for 3× phones. */}
@@ -39,14 +43,26 @@ export default function Header() {
               height={80}
               fetchPriority="high"
               decoding="async"
-              className="h-full w-full rounded-full object-cover transition-[filter] duration-300 md:grayscale md:group-hover:grayscale-0"
+              className="h-full w-full rounded-full object-cover md:grayscale"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/memoji.webp"
+              alt=""
+              aria-hidden="true"
+              width={80}
+              height={80}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 hidden h-full w-full rounded-full bg-muted object-cover opacity-0 transition-opacity duration-300 md:block md:group-hover:opacity-100 motion-reduce:transition-none"
             />
           </div>
         </Link>
         <div className="flex justify-end">
           <ThemeButton />
         </div>
-        <h1 className="text-3xl font-semibold">Michael Cohen</h1>
+        {/* The largest type on the page: the name, one step above the mark. */}
+        <h1 className="text-3xl font-bold tracking-tight md:text-[2.5rem]/none">Michael Cohen</h1>
       </div>
     </header>
   );
