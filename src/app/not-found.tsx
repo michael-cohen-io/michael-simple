@@ -18,12 +18,15 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center gap-6 py-12 text-center md:py-16">
+      {/* 320px WebP (8 KB) shown at up to 160px: sharp at 2×, and small
+          enough that it no longer dominates the page's load. */}
       <Image
-        src="/memoji.png"
+        src="/memoji.webp"
         alt=""
         width={160}
         height={160}
         priority
+        fetchPriority="high"
         className="h-32 w-32 md:h-40 md:w-40"
       />
       <p className="text-xl font-light leading-snug md:text-2xl md:leading-8">

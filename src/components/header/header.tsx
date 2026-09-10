@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import ThemeButton from "../theme/theme-button";
@@ -27,16 +26,19 @@ export default function Header() {
             {"<mc>"}
           </span>
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
-            <Image
+            {/* A plain img with its own srcset: the export cannot resize
+                images, so the two sizes are files in public/. 160px covers
+                2× on both breakpoints; 320px is for 3× phones. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/profile.webp"
+              srcSet="/profile-160.webp 160w, /profile.webp 320w"
+              sizes="(min-width: 768px) 80px, 64px"
               alt="Michael Cohen"
               width={80}
               height={80}
-              priority
-              // Next 15 no longer derives the hint from `priority`; keep the
-              // preload and the img at high priority as before.
               fetchPriority="high"
-              sizes="(min-width: 768px) 80px, 64px"
+              decoding="async"
               className="h-full w-full rounded-full object-cover transition-[filter] duration-300 md:grayscale md:group-hover:grayscale-0"
             />
           </div>
