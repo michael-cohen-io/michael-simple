@@ -43,8 +43,56 @@ test.describe("without JavaScript on a phone", () => {
   });
 });
 
+/**
+ * The header, main and footer must share one column: full width up to the
+ * same max width, the same side padding, so the mark, the headings and the
+ * footer line up on every screen. Checked at phone and desktop widths
+ * because a flex-column body once let the header shrink to its content.
+ */
+async function expectOneColumn(page: Page) {
+  const columns = await page.evaluate(() => {
+    const edge = (el: Element | null) => {
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return {
+        left: Math.round(box.left + parseFloat(style.paddingLeft)),
+        right: Math.round(box.right - parseFloat(style.paddingRight)),
+      };
+    };
+    return {
+      header: edge(document.querySelector("header")),
+      main: edge(document.querySelector("main")),
+      footer: edge(document.querySelector("footer")),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect(columns.overflow, "no horizontal scrolling").toBe(false);
+  expect(columns.header).toEqual(columns.main);
+  // The footer is full-width text; its content box must not be narrower than main's.
+  expect(columns.footer!.left).toBeLessThanOrEqual(columns.main!.left);
+  expect(columns.footer!.right).toBeGreaterThanOrEqual(columns.main!.right);
+  // The mark sits on the content's left edge, not indented from it.
+  const mark = await page.locator("header a").first().boundingBox();
+  expect(Math.round(mark!.x)).toBe(columns.main!.left);
+}
+
+test("lays the header, content and footer out in one column on a desktop", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expectOneColumn(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("lays the header, content and footer out in one column", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expectOneColumn(page);
+    // Nothing in the header may sit inside the page's side margin.
+    const main = await page.locator("main").boundingBox();
+    const theme = await page.getByRole("button", { name: /theme/i }).boundingBox();
+    expect(Math.round(theme!.x + theme!.width)).toBeLessThanOrEqual(Math.round(main!.x + main!.width));
+  });
 
   test("the first company is open and a second can open beside it", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });

@@ -72,7 +72,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <Header />
-          <main id="main" tabIndex={-1} className="mx-auto px-8 max-w-3xl outline-hidden">
+          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-3xl px-8 outline-hidden">
             {children}
           </main>
           <Footer />

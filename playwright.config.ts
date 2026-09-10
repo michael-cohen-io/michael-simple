@@ -14,6 +14,10 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
+    // CHROME_PATH points the runner at an existing Chromium when the one
+    // Playwright wants is not installed (a sandbox with a pinned browser,
+    // say); unset, Playwright uses its own download as usual.
+    launchOptions: { executablePath: process.env.CHROME_PATH || undefined },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {

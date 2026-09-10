@@ -10,8 +10,11 @@ import ThemeButton from "../theme/theme-button";
  * avatar's height so the name centres on the avatar.
  */
 export default function Header() {
+  // w-full matters: the body is a flex column, and a flex item with auto side
+  // margins shrinks to its content instead of stretching, which pushed the
+  // header inwards from the content's left edge.
   return (
-    <header className="mx-auto flex max-w-3xl items-center px-8">
+    <header className="mx-auto flex w-full max-w-3xl items-center px-8">
       <div className="grid w-full grid-cols-[auto_1fr] grid-rows-[auto_4rem] items-center gap-x-4 gap-y-2 py-8 md:grid-rows-[auto_5rem]">
         <Link
           href="/"
