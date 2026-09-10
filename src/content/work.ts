@@ -2,7 +2,8 @@ import type { Company } from "./types";
 
 /**
  * Where I have worked, one company per item with its roles, transcribed
- * verbatim from the production database on 2026-09-09. Order does not
+ * verbatim from the production database on 2026-09-09 (the Anthropic entry
+ * was rewritten on 2026-09-10 to cover the work since). Order does not
  * matter: companies and roles are sorted newest first when the page is built,
  * and each company's date range is derived from its roles (see lib/work.ts).
  */
@@ -14,12 +15,15 @@ export const companies: Company[] = [
     logoDark: "/anthropic_dark.svg",
     entries: [
       {
-        team: "API Team",
+        team: "Agentic Systems Team",
         role: "Member of Technical Staff",
         start: "2024-08",
         end: null,
         bullets: [
-          "Just started!",
+          "Tech lead for the Agentic Systems team and lead engineer on [Claude Managed Agents](https://claude.com/blog/claude-managed-agents), built from scratch to public beta in April 2026: Anthropic's hosted runtime for long-running agents, with sessions, sandboxes, vaults, memory, outcomes and multiagent orchestration, in production at _Notion, Rakuten, Asana, Sentry and Atlassian_.",
+          "Had a hand in every capability the platform has shipped, from the core session, harness and sandbox primitives to the [outcomes, multiagent orchestration, dreaming and webhooks](https://claude.com/blog/new-in-claude-managed-agents) launched at Code with Claude 2026.",
+          "Co-authored [Scaling Managed Agents: Decoupling the brain from the hands](https://www.anthropic.com/engineering/managed-agents), the engineering post whose brain / hands / session split is now widely cited as the reference architecture for agent runtimes ([InfoQ](https://www.infoq.com/news/2026/04/anthropic-managed-agents/), [DEV](https://dev.to/sangrokjung/anthropic-managed-agents-architecture-decoupling-brain-from-hands-for-scalable-ai-agents-295k)).",
+          "Moved the harness out of the execution container: _~60% lower median and >90% lower p95_ time to first token, with credentials never entering the sandbox.",
         ],
       },
     ],
