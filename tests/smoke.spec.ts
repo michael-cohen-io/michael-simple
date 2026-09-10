@@ -183,6 +183,9 @@ test("links every profile from Connect and names X in the card metadata", async 
     await expect(connect.locator(`a[href="${url}"]`), url).toHaveCount(1);
   }
   await expect(page.locator('meta[name="twitter:creator"]')).toHaveAttribute("content", "@_hi_mc");
+  // The published address is on the domain; the personal Gmail is not on the page.
+  await expect(connect.locator('a[href="mailto:hello@michaelcohen.io"]')).toHaveCount(1);
+  await expect(page.locator("body")).not.toContainText("gmail.com");
 });
 
 test("embeds Person structured data derived from the content", async ({ page }) => {

@@ -13,7 +13,8 @@ export const SITE_TITLE = "Michael Cohen — Member of Technical Staff at Anthro
 export const SITE_DESCRIPTION =
   "Michael Cohen is a Member of Technical Staff at Anthropic, on the Agentic Systems team building Claude Managed Agents. Brooklyn, NY.";
 
-export const CONTACT_EMAIL = "micohen13@gmail.com";
+/** On the domain, forwarded to the mailbox; the Gmail address is no longer published. */
+export const CONTACT_EMAIL = "hello@michaelcohen.io";
 
 export const SOURCE_URL = "https://github.com/michael-cohen-io/michael-simple";
 
