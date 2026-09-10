@@ -261,11 +261,15 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
     info: { title: string; contact?: { email?: string } };
     servers: { url: string }[];
     paths: Record<string, { get?: { operationId?: string; description?: string; tags?: string[] } }>;
+    components?: { schemas?: { Problem?: { required?: string[] } } };
   };
   expect(spec.openapi).toMatch(/^3\.1\./);
   expect(spec.info.title).toContain("Michael Cohen");
   expect(spec.info.contact?.email).toBe("hello@michaelcohen.io");
   expect(spec.servers.map((server) => server.url)).toEqual(["https://www.michaelcohen.io"]);
+  expect(spec.components?.schemas?.Problem?.required).toEqual(
+    expect.arrayContaining(["status", "code", "hint", "resources"]),
+  );
 
   // Every resource it lists exists, and every operation is self-describing.
   const paths = Object.keys(spec.paths);

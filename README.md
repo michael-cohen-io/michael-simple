@@ -8,7 +8,7 @@ The source of [michaelcohen.io](https://michaelcohen.io), a one-page personal si
 - [Tailwind CSS 4](https://tailwindcss.com/) (configured in [`src/app/globals.css`](./src/app/globals.css), no `tailwind.config`) and a few [shadcn/ui](https://ui.shadcn.com/) primitives (Radix accordion, separator, slot)
 - The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time
 - [Raleway](https://fonts.google.com/specimen/Raleway) self-hosted through `next/font`
-- [bun](https://bun.sh/) as the package manager and script runner; deployed on Vercel as static files, with the response headers and the `*.vercel.app` redirect in [`vercel.json`](./vercel.json)
+- [bun](https://bun.sh/) as the package manager and script runner; deployed on Vercel as static files, with the response headers and the `*.vercel.app` redirect in [`vercel.json`](./vercel.json), and one [Routing Middleware](https://vercel.com/docs/routing-middleware), [`middleware.ts`](./middleware.ts), that serves `/` as Markdown to clients that prefer it and gives unknown paths a 404 body agents can read (Markdown, or an RFC 9457 problem document for JSON clients)
 
 ## Getting started
 
@@ -24,10 +24,10 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | Script | What it does |
 | --- | --- |
 | `bun run dev` | Start the development server |
-| `bun run build` | Build the site into `out/` (plain files; serve them with any static server, e.g. `python3 -m http.server 3000 --directory out`) |
+| `bun run build` | Build the site into `out/` (plain files; serve them with any static server, e.g. `python3 -m http.server 3000 --directory out`), then check that `out/` matches the middleware's list of published paths |
 | `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
-| `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
+| `bun run test:e2e` | Run the Playwright smoke test against `out/` and the middleware tests (build first; `bunx playwright install chromium` once) |
 | `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md`, `public/llms.txt` and `public/openapi.json` from `src/content` (runs on its own before `dev` and `build`) |
 
 ## Résumé
