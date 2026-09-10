@@ -1,4 +1,5 @@
 import AgentView from "@/components/agent/agent-view";
+import Ask from "@/components/ask/ask";
 import Contact from "@/components/contact/contact";
 import About from "@/components/home/about";
 import Writing from "@/components/home/writing";
@@ -12,6 +13,7 @@ export default function Home() {
       {/* The human view; hidden by CSS while the agent view is showing. */}
       <div className="human-view flex w-full flex-col items-center gap-16 md:gap-20">
         <About />
+        <Ask />
         <Writing />
         <Work />
         <Contact />

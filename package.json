@@ -20,6 +20,7 @@
     "llms": "bun scripts/build-llms.tsx"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.125.0",
     "@base-ui/react": "1.8.0",
     "@react-pdf/renderer": "^4.9.0",
     "@vercel/analytics": "^2.0.1",

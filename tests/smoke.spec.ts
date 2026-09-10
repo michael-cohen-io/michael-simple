@@ -262,7 +262,7 @@ test("sets the name above the hero on the type scale, with tabular dates", async
         name: px(document.querySelector("h1")),
         mark: px(document.querySelector("header a span")),
         hero: px(document.querySelector("main p")),
-        heading: px(document.querySelector("main h2")),
+        heading: px(document.getElementById("work-heading")),
         dates: getComputedStyle(document.querySelector("main time")!).fontVariantNumeric,
         memoji: (document.querySelector('header img[src="/memoji.webp"]') as HTMLImageElement | null)?.alt,
       };
@@ -487,6 +487,39 @@ test("flips the page into the Markdown an agent gets, and back", async ({ page }
   await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
   await expect(agent).toHaveCount(0);
   await expect(page.locator("html")).not.toHaveAttribute("data-view", "agent");
+});
+
+test("asks the agent from the box under the hero", async ({ page }) => {
+  // The function only exists on Vercel; here the route is answered in-page.
+  const questions: string[] = [];
+  await page.route("/api/ask", async (route) => {
+    const body = route.request().postDataJSON() as { question: string; sessionId: string | null };
+    questions.push(body.question);
+    if (body.question.includes("fail")) {
+      await route.fulfill({
+        status: 429,
+        contentType: "application/problem+json",
+        body: JSON.stringify({ title: "Too Many Requests", detail: "Slow down a little.", code: "rate_limited" }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ answer: `You asked: ${body.question}`, sessionId: "sess_test", backend: "agent" }),
+    });
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const box = page.getByRole("region", { name: "Ask about my work" });
+  await expect(box).toBeVisible();
+  await box.getByRole("button", { name: "What did you build at Anthropic?" }).click();
+  await expect(box.getByRole("status")).toContainText("You asked: What did you build at Anthropic?");
+  await expect(box.getByRole("status")).toContainText("Claude Managed Agents");
+
+  await box.getByLabel("Your question").fill("please fail");
+  await box.getByRole("button", { name: "Ask" }).click();
+  await expect(box.getByRole("alert")).toContainText("Slow down a little.");
+  expect(questions).toEqual(["What did you build at Anthropic?", "please fail"]);
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {

@@ -67,6 +67,13 @@ test("passes every published path and Next's own files through to the filesystem
   }
 });
 
+test("passes the ask function through, whatever the client accepts", () => {
+  for (const accept of [undefined, "*/*", "application/json", "text/html"]) {
+    const response = call("/api/ask", accept);
+    expect(response.headers.get("x-middleware-next"), String(accept)).toBe("1");
+  }
+});
+
 test("treats API-shaped paths as calls from programs", async () => {
   for (const path of ["/api", "/api/", "/api/v1", "/api/v1/things", "/v1", "/v2/probe", "/graphql", "/graphql/"]) {
     expect(looksLikeApi(path), path).toBe(true);

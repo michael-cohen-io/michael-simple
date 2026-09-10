@@ -4,6 +4,12 @@
   "installCommand": "bun install --frozen-lockfile",
   "framework": null,
   "outputDirectory": "out",
+  "functions": {
+    "api/ask.ts": {
+      "maxDuration": 60,
+      "includeFiles": "public/index.md"
+    }
+  },
   "headers": [
     {
       "source": "/",
