@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, PROFILES } from "@/lib/site";
 
 import { SectionHeading } from "../typography/heading";
 
@@ -10,22 +10,9 @@ type ContactItem = {
   url: string;
 };
 
+/** The profiles from lib/site.ts, then email; one row each. */
 const contactItems: ContactItem[] = [
-  {
-    name: "GitHub",
-    value: "@michael-cohen-io",
-    url: "https://github.com/michael-cohen-io",
-  },
-  {
-    name: "LinkedIn",
-    value: "/michael-cohen1995",
-    url: "https://www.linkedin.com/in/michael-cohen1995/",
-  },
-  {
-    name: "X / Twitter",
-    value: "@pwincessmichael",
-    url: "https://twitter.com/pwincessmichael",
-  },
+  ...PROFILES.map(({ name, handle, url }) => ({ name, value: handle, url })),
   {
     name: "Email",
     value: CONTACT_EMAIL,
