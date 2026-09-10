@@ -1,5 +1,3 @@
-import type { Month } from "./types";
-
 /**
  * Everything on the résumé PDF that is not the work history. The history
  * itself comes from ./work.ts, curated by the `resume` fields there, so the
@@ -14,12 +12,6 @@ export type Resume = {
   email: string;
   /** Shown without its scheme; linked with it. */
   site: string;
-  /**
-   * The month the content last changed, `YYYY-MM`. Shown next to the download
-   * link and stamped into the PDF. The build refuses a value older than the
-   * newest month in the work history.
-   */
-  updated: Month;
   education: { school: string; degree: string; when: string }[];
   skills: { label: string; items: string[] }[];
 };
@@ -29,7 +21,6 @@ export const resume: Resume = {
   location: "New York, NY",
   email: "micohen13@gmail.com",
   site: "https://michaelcohen.io",
-  updated: "2026-09",
   education: [
     {
       school: "University of Florida",

@@ -8,10 +8,10 @@ export const SITE_URL = "https://www.michaelcohen.io";
 
 export const SITE_NAME = "Michael Cohen";
 
-export const SITE_TITLE = "Michael Cohen — Software Engineer at Anthropic";
+export const SITE_TITLE = "Michael Cohen — Member of Technical Staff at Anthropic";
 
 export const SITE_DESCRIPTION =
-  "Michael Cohen is a software engineer on Anthropic's Agentic Systems team in Brooklyn, NY, building Claude Managed Agents. Previously OpenSea and Amazon.";
+  "Michael Cohen is a Member of Technical Staff at Anthropic, on the Agentic Systems team building Claude Managed Agents. Brooklyn, NY.";
 
 export const CONTACT_EMAIL = "micohen13@gmail.com";
 
@@ -32,8 +32,7 @@ export const X_HANDLE = PROFILES[2].handle;
 
 /**
  * The résumé PDF: where it lives and what it saves as. It is generated from
- * src/content on every build (scripts/build-resume.tsx); the month it was
- * last changed is `resume.updated` in src/content/resume.ts.
+ * src/content on every build (scripts/build-resume.tsx).
  */
 export const RESUME = {
   href: "/MichaelCohenResume.pdf",

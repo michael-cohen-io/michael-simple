@@ -6,6 +6,5 @@ The résumé PDF is generated from the same file on every build. A role or
 company can carry a `resume` field: `false` leaves it off the PDF, a role's
 `{ bullets }` swaps in shorter bullets for the one-pager, and a company's
 `{ role, bullets }` folds all its roles into one block. Everything else on
-the PDF (contact line, education, skills, the `updated` month shown next to
-the download link) is in `resume.ts`. The build fails if the PDF runs past
-one page or `updated` predates the newest role.
+the PDF (contact line, education, skills) is in `resume.ts`. The build fails
+if the PDF runs past one page.

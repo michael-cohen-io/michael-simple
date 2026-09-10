@@ -60,7 +60,7 @@ export default async function OpenGraphImage() {
             Michael Cohen
           </div>
           <div style={{ fontSize: 34, lineHeight: 1.3, color: "#d4d4d4" }}>
-            Software engineer · Agentic Systems at Anthropic · Brooklyn, NY
+            Member of Technical Staff · Anthropic · Brooklyn, NY
           </div>
           <div style={{ fontSize: 32, color: PINK }}>michaelcohen.io</div>
         </div>

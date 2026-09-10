@@ -63,10 +63,3 @@ export function resumeBlocks(companies: Company[]): ResumeBlock[] {
     }));
   });
 }
-
-/** The newest month anywhere in the blocks: what `resume.updated` must not predate. */
-export function newestMonth(blocks: ResumeBlock[]): string {
-  return blocks
-    .flatMap((block) => [block.startIso, block.endIso ?? ""])
-    .reduce((newest, month) => (month > newest ? month : newest), "");
-}

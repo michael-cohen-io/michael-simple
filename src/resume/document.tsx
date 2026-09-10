@@ -6,7 +6,6 @@ import ReactMarkdown, { type Components } from "react-markdown";
 
 import type { Resume } from "@/content/resume";
 import type { ResumeBlock } from "@/lib/resume";
-import { monthLabel } from "@/lib/work";
 
 /**
  * The résumé as a react-pdf document: US Letter, half-inch margins, Raleway
@@ -142,7 +141,7 @@ export function ResumeDocument({ resume, blocks }: { resume: Resume; blocks: Res
     <Document
       title={`${resume.name} — Résumé`}
       author={resume.name}
-      subject={`Résumé, updated ${monthLabel(resume.updated)}`}
+      subject="Résumé"
       language="en-US"
       creator={siteLabel}
       producer="react-pdf"
