@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import ViewToggle from "../agent/view-toggle";
 import ThemeButton from "../theme/theme-button";
 
 /**
@@ -58,7 +59,8 @@ export default function Header() {
             />
           </div>
         </Link>
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
+          <ViewToggle />
           <ThemeButton />
         </div>
         {/* The largest type on the page: the name, one step above the mark. */}

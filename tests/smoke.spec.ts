@@ -468,6 +468,27 @@ test("serves the résumé as a JSON Resume document", async ({ request }) => {
   expect(Object.keys(spec.paths)).toContain("/resume.json");
 });
 
+test("flips the page into the Markdown an agent gets, and back", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const group = page.getByRole("group", { name: "View as" });
+  await expect(group.getByRole("button", { name: "human" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
+
+  await group.getByRole("button", { name: "agent" }).click();
+  const agent = page.getByRole("region", { name: "The page as an agent receives it" });
+  await expect(agent).toBeVisible();
+  await expect(agent.locator("pre").first()).toContainText("# Michael Cohen");
+  await expect(agent.locator("pre").first()).toContainText("## Work Experience");
+  await expect(agent.locator("pre").nth(1)).toContainText("## When to use this site");
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeHidden();
+  await expect(page.locator("html")).toHaveAttribute("data-view", "agent");
+
+  await group.getByRole("button", { name: "human" }).click();
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
+  await expect(agent).toHaveCount(0);
+  await expect(page.locator("html")).not.toHaveAttribute("data-view", "agent");
+});
+
 test("serves the crawler and sharing files", async ({ request }) => {
   for (const path of ["/robots.txt", "/sitemap.xml", "/opengraph-image"]) {
     const response = await request.get(path);

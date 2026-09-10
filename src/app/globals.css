@@ -124,6 +124,11 @@
   }
 }
 
+/* The agent view (view-toggle.tsx) replaces the human sections. */
+html[data-view="agent"] .human-view {
+  display: none;
+}
+
 /* Windows High Contrast and the like drop backgrounds and most colour:
    links keep an underline and the timeline keeps its dots and line. */
 @media (forced-colors: active) {
