@@ -198,6 +198,7 @@ test("embeds Person structured data derived from the content", async ({ page }) 
   expect(person.name).toBe("Michael Cohen");
   expect(person.worksFor.name).toBe("Anthropic");
   expect(person.jobTitle).toBe("Member of Technical Staff");
+  expect(person.email).toBe("hello@michaelcohen.io");
   expect(person.sameAs).toEqual(
     expect.arrayContaining(["https://github.com/michael-cohen-io", "https://x.com/_hi_mc"]),
   );
@@ -223,7 +224,32 @@ test("the 404 page is in the site's chrome with a way back", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Michael Cohen, home" })).toBeVisible();
   await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   await expect(page.locator("main img").first()).toHaveAttribute("src", /memoji\.webp$/);
+  // Somewhere to go next, for people and agents alike.
+  for (const href of ["/sitemap.xml", "/llms.txt", "/MichaelCohenResume.pdf"]) {
+    await expect(page.locator(`main a[href="${href}"]`), href).toHaveCount(1);
+  }
   expect(errors.pageErrors).toEqual([]);
+});
+
+test("serves llms.txt and the Markdown twin of the home page", async ({ request }) => {
+  const llms = await request.get("/llms.txt");
+  expect(llms.status()).toBe(200);
+  const llmsText = await llms.text();
+  expect(llmsText.startsWith("# Michael Cohen\n")).toBe(true);
+  expect(llmsText).toContain("## When to use this site");
+  expect(llmsText).toContain("https://www.michaelcohen.io/index.md");
+
+  // Generated from the same content as the page, so the roles and their
+  // links are the ones the timeline shows.
+  const md = await request.get("/index.md");
+  expect(md.status()).toBe(200);
+  const mdText = await md.text();
+  expect(mdText.startsWith("# Michael Cohen\n")).toBe(true);
+  expect(mdText).toContain("## Work Experience");
+  expect(mdText).toContain("### Anthropic (Aug 2024 – Present)");
+  expect(mdText).toContain("[Claude Managed Agents](https://claude.com/blog/claude-managed-agents)");
+  expect(mdText).toContain("hello@michaelcohen.io");
+  expect(mdText).not.toContain("gmail");
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {

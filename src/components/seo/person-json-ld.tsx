@@ -1,6 +1,6 @@
 import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
-import { PROFILES, SITE_NAME, SITE_URL } from "@/lib/site";
+import { CONTACT_EMAIL, PROFILES, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { companyViews } from "@/lib/work";
 
 /**
@@ -26,6 +26,9 @@ export function PersonJsonLd() {
     familyName: "Cohen",
     url: `${SITE_URL}/`,
     image: `${SITE_URL}/portrait.jpg`,
+    description: SITE_DESCRIPTION,
+    // The address on the domain, already on the page; the personal one is not published.
+    email: CONTACT_EMAIL,
     ...(role && { jobTitle: role.role }),
     ...(current && {
       worksFor: {
@@ -51,6 +54,8 @@ export function PersonJsonLd() {
     "@type": "ProfilePage",
     "@id": `${SITE_URL}/#profile`,
     url: `${SITE_URL}/`,
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
     mainEntity: person,
   };
 

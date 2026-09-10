@@ -28,7 +28,7 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
-| `bun run resume:pdf` | Render `public/MichaelCohenResume.pdf` from `src/content` (runs on its own before `dev` and `build`) |
+| `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md` and `public/llms.txt` from `src/content` (runs on its own before `dev` and `build`) |
 
 ## Résumé
 
