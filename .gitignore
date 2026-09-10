@@ -10,6 +10,9 @@
 /.next/
 /out/
 
+# generated from src/content by `bun run resume:pdf` (prebuild / predev)
+/public/MichaelCohenResume.pdf
+
 # production
 /build
 

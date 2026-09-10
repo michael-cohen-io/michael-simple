@@ -47,6 +47,15 @@ export const companies: Company[] = [
           "Served as team’s TL and set the technical direction, authored/reviewed engineering RFCs, and set up operational processes and standards.",
           "Worked cross functionally with BD, marketing, ops, legal, and finance on partnerships, deal negotiations, and product launches.",
         ],
+        resume: {
+          bullets: [
+            "Bootstrapped and managed a team of 6 engineers (FS + BE) building products and tools for creators.",
+            "Led the development of [Primary Drops](https://opensea.io/blog/articles/drops-on-opensea-an-immersive-and-secure-minting-experience), a zero-to-one NFT creation platform with $25M+ GMV and $2M+ revenue, growing from 0% to ~15% market share.",
+            "Shipped [OpenSea Studio](https://opensea.io/blog/articles/introducing-opensea-studio), a no-code, one-stop shop for creators to build and manage NFT projects: 12M+ NFTs created across 25K collections.",
+            "Shipped new collection pages with a feature-rich editor, and launched NFT projects with Nike, Puma, Adidas, Haas and Hugo Boss.",
+            "Served as the team's tech lead: set the technical direction, authored and reviewed RFCs, and worked with BD, marketing, ops, legal and finance on partnerships and launches.",
+          ],
+        },
       },
       {
         team: "Platform Team",
@@ -58,6 +67,13 @@ export const companies: Company[] = [
           "Led the scaling, migration, and [documentation rewrite](https://docs.opensea.io/reference/api-overview) of the public REST API, introduced a new Elixir-based [stream API](https://docs.opensea.io/reference/stream-api-overview), and integrated advanced queuing systems for robust scalability.",
           "Implemented spam detection for blockchain NFT mints and facilitated the [integration of the Solana blockchain](https://opensea.io/blog/articles/check-out-solana-in-beta-on-opensea) into the marketplace, broadening platform capabilities while increasing the stability of our infrastructure.",
         ],
+        resume: {
+          bullets: [
+            "Drove platform enhancements through OpenSea's hyperscale period, contributing to GMV growth that now stands at [$35 billion](https://dune.com/opensea_team/OpenSea-Key-Metrics).",
+            "Led the scaling, migration and documentation rewrite of the public REST API, introduced an Elixir-based [stream API](https://docs.opensea.io/reference/stream-api-overview), and added queuing systems for robust scalability.",
+            "Built spam detection for NFT mints and integrated the Solana blockchain into the marketplace.",
+          ],
+        },
       },
     ],
   },
@@ -65,6 +81,15 @@ export const companies: Company[] = [
     name: "Amazon",
     url: "https://www.amazon.com/",
     logo: "/amazon.svg",
+    // One block on the résumé: three years as a Software Engineer.
+    resume: {
+      role: "Software Engineer",
+      bullets: [
+        "Led development of Data Lifecycle Manager for AWS Backup Service ($2.9B revenue in 2017), automating backup policies for data stored on EBS volumes.",
+        "Built full-stack features for the iOS Creator app and led the FireTV project, transforming the Amazon Shopping app into a livestream-centric experience.",
+        "Implemented gamification features for Amazon Live, growing the creator base from under 2K to over 15K creators.",
+      ],
+    },
     entries: [
       {
         team: "Amazon Live: FireTV",
@@ -102,6 +127,7 @@ export const companies: Company[] = [
         role: "Software Engineering Intern",
         start: "2017-05",
         end: "2017-08",
+        resume: false,
         bullets: [
           "Designed and implemented a web tool for the Prime Pantry team",
           "Reconstructed the mapping-update process between customers and Amazon fulfillment centers, reducing the execution time from days to minutes.",
@@ -113,6 +139,7 @@ export const companies: Company[] = [
     name: "IBM",
     url: "https://www.ibm.com/us-en",
     logo: "/ibm.svg",
+    resume: false,
     entries: [
       {
         team: "Watson Research",
@@ -129,6 +156,7 @@ export const companies: Company[] = [
   {
     name: "Nielsen",
     url: "https://www.nielsen.com/",
+    resume: false,
     entries: [
       {
         team: "Open API Platform",

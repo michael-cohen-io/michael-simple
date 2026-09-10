@@ -1,6 +1,7 @@
+import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
 import { RESUME } from "@/lib/site";
-import { companyViews } from "@/lib/work";
+import { companyViews, monthLabel } from "@/lib/work";
 
 import { SectionHeading } from "../typography/heading";
 import { WorkAccordion } from "./WorkAccordion";
@@ -24,7 +25,7 @@ export default function Work() {
           download={RESUME.download}
           className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
-          Download the résumé (PDF, updated {RESUME.updated})
+          Download the résumé (PDF, updated {monthLabel(resume.updated)})
         </a>
       </p>
       {/* Both layouts are in the HTML; CSS shows the one that fits. */}

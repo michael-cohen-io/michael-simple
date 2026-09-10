@@ -60,6 +60,15 @@ test("has one h1 and alt text on every image", async ({ page }) => {
   await expect(page.locator("img:not([alt])")).toHaveCount(0);
 });
 
+test("serves the résumé PDF generated from the content files", async ({ request }) => {
+  const response = await request.get("/MichaelCohenResume.pdf");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("pdf");
+  const body = await response.body();
+  expect(body.subarray(0, 5).toString()).toBe("%PDF-");
+  expect(body.length).toBeGreaterThan(20_000);
+});
+
 test("serves the crawler and sharing files", async ({ request }) => {
   for (const path of ["/robots.txt", "/sitemap.xml", "/opengraph-image"]) {
     const response = await request.get(path);

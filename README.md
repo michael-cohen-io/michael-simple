@@ -28,7 +28,11 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` (build first; `bunx playwright install chromium` once) |
-| `bun run resume:pdf` | Build `public/MichaelCohenResume.pdf` from `resume.tex` |
+| `bun run resume:pdf` | Render `public/MichaelCohenResume.pdf` from `src/content` (runs on its own before `dev` and `build`) |
+
+## Résumé
+
+The PDF behind "Download résumé" is generated, not kept in the repo. [`scripts/build-resume.tsx`](./scripts/build-resume.tsx) renders [`src/resume/document.tsx`](./src/resume/document.tsx) (react-pdf, with Raleway bundled in `src/resume/fonts/`) from the same [`src/content/work.ts`](./src/content/work.ts) the page uses, plus [`src/content/resume.ts`](./src/content/resume.ts) for the contact line, education and skills. It runs before every `bun run dev` and `bun run build`, so the download can never lag the site. Roles carry an optional `resume` field in `work.ts` to shorten their bullets for the one-pager, fold a company into a single block, or leave it off; the build fails if the result exceeds one page or `resume.updated` predates the newest role.
 
 ## Checks
 

@@ -17,11 +17,14 @@ export const CONTACT_EMAIL = "micohen13@gmail.com";
 
 export const SOURCE_URL = "https://github.com/michael-cohen-io/michael-simple";
 
-/** The résumé PDF: where it lives, what it saves as, and when it was rebuilt. */
+/**
+ * The résumé PDF: where it lives and what it saves as. It is generated from
+ * src/content on every build (scripts/build-resume.tsx); the month it was
+ * last changed is `resume.updated` in src/content/resume.ts.
+ */
 export const RESUME = {
   href: "/MichaelCohenResume.pdf",
   download: "Michael Cohen - Resume.pdf",
-  updated: "Sep 2026",
 } as const;
 
 /**

@@ -31,7 +31,7 @@ export default function About() {
         <code className="rounded-md bg-muted px-[0.3rem] py-[0.2rem] font-mono text-base font-semibold md:text-lg">
           Hello, World!
         </code>{" "}
-        I&apos;m Michael Cohen, a software engineer on the API team at{" "}
+        I&apos;m Michael Cohen, a software engineer on the Agentic Systems team at{" "}
         <Employer href="https://www.anthropic.com">Anthropic</Employer>, based
         in Brooklyn, NY. Before that I led the Creator team at{" "}
         <Employer href="https://opensea.io">OpenSea</Employer> and built AWS
