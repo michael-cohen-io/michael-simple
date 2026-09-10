@@ -15,6 +15,22 @@ updates:
         update-types:
           - minor
           - patch
+    # Majors that are declined until taken deliberately. Each one's minor and
+    # patch updates still arrive in the grouped PR.
+    ignore:
+      # ESLint 10 crashes eslint-config-next's eslint-plugin-react
+      # (react/display-name: contextOrFilename.getFilename is not a function);
+      # retry when eslint-config-next updates that plugin. See CLAUDE.md.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      # package.json pins Node 22 in `engines`; the types follow the runtime,
+      # so bump both together when moving to a newer Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 is the native-compiler rewrite; adopt it on purpose, with
+      # the toolchain checked against it, not from a weekly bump.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
