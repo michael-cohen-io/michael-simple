@@ -1,20 +1,20 @@
-import Link from "next/link";
+import { SOURCE_URL } from "@/lib/site";
 
 export default function Footer() {
   return (
-    <div className="absolute w-full mx-auto px-auto py-5 text-center">
+    <footer className="mt-16 w-full py-8 text-center">
       <p className="text-base text-muted-foreground">
-        Built with 🤍 by{" "}
-        <span className="text-primary font-semibold underline-offset-4 transition-colors hover:underline">
-          <Link
-            href="https://twitter.com/pwincessmichael"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Michael Cohen
-          </Link>
-        </span>
+        Built with <span aria-hidden="true">🤍</span> by{" "}
+        <a
+          href={SOURCE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Michael Cohen — source on GitHub (opens in new tab)"
+          className="py-2 font-semibold text-primary underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
+        >
+          Michael Cohen
+        </a>
       </p>
-    </div>
+    </footer>
   );
 }

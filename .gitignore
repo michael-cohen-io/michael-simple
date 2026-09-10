@@ -10,12 +10,18 @@
 /.next/
 /out/
 
+# generated from src/content by `bun run resume:pdf` (prebuild / predev)
+/public/MichaelCohenResume.pdf
+
 # production
 /build
 
 # misc
 .DS_Store
 *.pem
+
+# personal editor settings (launch.json and tasks.json stay shared)
+.vscode/settings.json
 
 # debug
 npm-debug.log*
@@ -32,3 +38,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .aider*
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/

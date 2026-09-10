@@ -1,31 +1,51 @@
-import { MDXRemote } from "next-mdx-remote/rsc";
-import Link from "next/link";
-import { Fragment, Suspense } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
 
-const components = {
-  p: (props: any) => <p className="py-1">{props.children}</p>,
-  a: (props: any) => (
-    <Link {...props} className="text-primary underline hover:text-primary/85">
-      {props.children}
-    </Link>
-  ),
+/**
+ * Renders one bullet of the work history: a short paragraph of Markdown from
+ * content/work.ts. Only inline text, emphasis and links survive; any other
+ * construct (headings, images, raw HTML, lists) is unwrapped to its text, and
+ * a link whose URL is not http(s) or mailto loses its href and is shown as
+ * plain text. It is a plain server component, so it adds nothing to the
+ * client bundle.
+ */
+
+const allowedElements = ["p", "a", "strong", "em", "code"];
+
+const urlTransform = (url: string) =>
+  /^(https?:|mailto:)/i.test(url) ? url : "";
+
+const linkClassName =
+  "py-2 text-primary underline underline-offset-4 hover:decoration-2";
+
+const components: Components = {
+  p: ({ children }) => <p>{children}</p>,
+  // Only href and children are forwarded: nothing else from the source can
+  // reach the DOM. Links to other sites open in a new tab and say so.
+  a: ({ href, children }) => {
+    if (!href) return <>{children}</>;
+    const external = /^https?:/i.test(href);
+    return (
+      <a
+        href={href}
+        className={linkClassName}
+        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        {children}
+        {external && <span className="sr-only"> (opens in new tab)</span>}
+      </a>
+    );
+  },
 };
 
-export default async function MarkDownTextWithLinebreaks(props: {
-  text: string;
-}) {
-  const { text } = props;
-  if (!text) return null;
-  const lines = text.split("\\n");
+export function Markdown({ children }: { children: string }) {
   return (
-    <>
-      {lines.map((line, index) => (
-        <Fragment key={index}>
-          <Suspense fallback={<>Loading...</>}>
-            <MDXRemote source={line} components={{ ...components }} />
-          </Suspense>
-        </Fragment>
-      ))}
-    </>
+    <ReactMarkdown
+      allowedElements={allowedElements}
+      unwrapDisallowed
+      urlTransform={urlTransform}
+      components={components}
+    >
+      {children}
+    </ReactMarkdown>
   );
 }

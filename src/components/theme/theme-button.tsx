@@ -2,20 +2,25 @@
 
 import { useTheme } from "next-themes";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const subscribeToNothing = () => () => {};
 
 export default function ThemeButton({ className }: { className?: string }) {
   // resolvedTheme (not theme) so the default "system" setting reports the
   // theme actually in effect; otherwise the first click is a no-op.
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // false in the server HTML and while hydrating, true from the first
+  // client-only render on: the same "mounted" gate as a setState-in-effect,
+  // without the extra render pass that pattern needs.
+  const mounted = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
 
   // resolvedTheme is unknown on the server and during the first client render,
   // so the label is generic until mount. The icons are chosen by CSS, which lets
@@ -31,7 +36,7 @@ export default function ThemeButton({ className }: { className?: string }) {
     <Button
       variant="ghost"
       className={cn(
-        "text-foreground hover:text-muted-foreground rounded-full p-3",
+        "h-11 w-11 rounded-full p-0 text-foreground hover:text-muted-foreground print:hidden",
         className,
       )}
       aria-label={label}

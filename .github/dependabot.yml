@@ -1,0 +1,21 @@
+# Weekly dependency bumps. The bun ecosystem updates package.json and bun.lock
+# together (the npm ecosystem would leave bun.lock stale and fail the frozen
+# install in CI); minor and patch updates arrive as one grouped PR, majors as
+# their own so they can be staged.
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

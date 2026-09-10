@@ -1,29 +1,100 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* next-themes toggles a `dark` class on <html>; keep `dark:` bound to it
+   rather than to prefers-color-scheme. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens. The palette stays as raw HSL channels on :root / .dark
+ * below (so a class swap flips every colour at once); `@theme inline` maps
+ * them to Tailwind's colour names by value, so utilities compile to
+ * hsl(var(--x)) directly and no second set of --color-* variables is emitted.
+ */
+@theme inline {
+  --font-sans:
+    var(--font-raleway), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/*
+ * One pink accent. In light mode --primary is dark enough to be text on white
+ * (5.15:1); the surfaces are a four-stop tint ramp of the same hue so cards,
+ * rules and the code chip each read against the page rather than all sharing
+ * one value. Dark mode keeps the original light pink, which passes on near-black.
+ */
 @layer base {
   :root {
-    --background: 0 100% 100%;
+    --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
-    --card: 0 100% 100%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
-    --popover: 0 100% 100%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 330 100% 80%;
+    --primary: 330 100% 42%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 330 50% 90%;
+    --secondary: 330 45% 93%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 330 50% 90%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 330 40% 96%;
+    --muted-foreground: 0 0% 40%;
     --accent: 330 50% 90%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 330 50% 90%;
-    --input: 330 50% 90%;
-    --ring: 330 100% 80%;
-    --radius: 1rem;
+    --border: 330 35% 86%;
+    --input: 330 35% 86%;
+    --ring: 330 100% 42%;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -34,17 +105,17 @@
     --popover: 0 0% 7.1%;
     --popover-foreground: 0 0% 98%;
     --primary: 330 100% 80%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 330 30% 30%;
+    --primary-foreground: 330 40% 12%;
+    --secondary: 330 18% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 330 30% 30%;
+    --muted: 330 15% 14%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 330 30% 30%;
+    --accent: 330 25% 24%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 330 30% 30%;
-    --input: 330 30% 30%;
+    --border: 330 20% 26%;
+    --input: 330 20% 26%;
     --ring: 330 100% 80%;
   }
 }
@@ -55,5 +126,42 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Visitors who ask for reduced motion get no animation or transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* On paper: black on white, no theme toggle or skip link, external link
+   targets written out, and no card split across two pages. */
+@media print {
+  :root,
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --muted: 0 0% 100%;
+    --muted-foreground: 0 0% 25%;
+    --secondary: 0 0% 100%;
+    --secondary-foreground: 0 0% 0%;
+    --accent: 0 0% 100%;
+    --border: 0 0% 60%;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-weight: 400;
+    word-break: break-all;
   }
 }
