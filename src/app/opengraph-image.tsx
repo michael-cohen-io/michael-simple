@@ -55,7 +55,7 @@ export default async function OpenGraphImage() {
             padding: "0 64px",
           }}
         >
-          <div style={{ fontSize: 40, color: PINK }}>{"<MC>"}</div>
+          <div style={{ fontSize: 40, color: PINK }}>{"<mc>"}</div>
           <div style={{ fontSize: 80, fontWeight: 700, lineHeight: 1 }}>
             Michael Cohen
           </div>
