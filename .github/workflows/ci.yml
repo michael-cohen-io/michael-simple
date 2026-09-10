@@ -39,14 +39,22 @@ jobs:
     name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Advisory only for now: the remaining advisories are in the ESLint and
-    # Tailwind dev chain until PRs 09-11 replace them. Drop continue-on-error
-    # once `bun audit --audit-level=high` is clean.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.11
       - run: bun install --frozen-lockfile
-      - run: bun audit --audit-level=high
+      # Advisory only for now: every remaining advisory is in next 14 or the
+      # ESLint 8 / Tailwind 3 dev chain, which PRs 09-11 replace. Until then a
+      # non-empty report is a warning and the job summary, not a failed step,
+      # so a green run does not carry a red step. PR 09 turns this back into a
+      # plain, blocking `bun audit --audit-level=high`.
+      - name: bun audit (advisory)
+        run: |
+          set -o pipefail
+          if NO_COLOR=1 bun audit --audit-level=high | tee audit.txt; then
+            exit 0
+          fi
+          { echo '```'; cat audit.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=Dependency audit::High or critical advisories remain (see the job summary). Advisory until the Next 15 / ESLint 9 upgrade lands."
