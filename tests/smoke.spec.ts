@@ -125,7 +125,9 @@ test("says what I do in one sentence, with the résumé one tap away", async ({ 
   await expect(hero).toContainText("Claude Managed Agents");
   await expect(hero).not.toContainText("OpenSea");
   await expect(page.locator("body")).not.toContainText(/updated \w+ \d{4}/i);
-  await expect(page.getByRole("link", { name: /Download résumé/ }).first()).toHaveAttribute(
+  // One résumé link on the page, in the Work section; no button row in the hero.
+  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveAttribute(
     "href",
     "/MichaelCohenResume.pdf",
   );
