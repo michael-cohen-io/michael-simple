@@ -7,14 +7,16 @@
   },
   "packageManager": "bun@1.3.11",
   "scripts": {
-    "predev": "bun run resume:pdf",
+    "predev": "bun run generate",
     "dev": "next dev",
-    "prebuild": "bun run resume:pdf",
+    "prebuild": "bun run generate",
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "resume:pdf": "bun scripts/build-resume.tsx"
+    "generate": "bun run resume:pdf && bun run llms",
+    "resume:pdf": "bun scripts/build-resume.tsx",
+    "llms": "bun scripts/build-llms.tsx"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",
