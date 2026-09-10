@@ -189,6 +189,44 @@ test("says what I do in one sentence, with the résumé one tap away", async ({ 
   );
 });
 
+test("keeps the accent readable on both grounds and tells the browser the theme", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const contrast = async () =>
+    page.evaluate(() => {
+      const channel = (v: number) => {
+        const c = v / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      // Computed colours come back in whatever space they were written in
+      // (oklch here); a 1×1 canvas resolves any of them to sRGB bytes.
+      const luminance = (color: string) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const link = document.querySelector("main a.text-primary") as HTMLElement;
+      const fg = luminance(getComputedStyle(link).color);
+      const bg = luminance(getComputedStyle(document.body).backgroundColor);
+      return {
+        ratio: (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05),
+        scheme: getComputedStyle(document.documentElement).colorScheme,
+      };
+    });
+  const light = await contrast();
+  expect(light.scheme).toBe("light");
+  expect(light.ratio).toBeGreaterThanOrEqual(4.5);
+
+  await page.getByRole("button", { name: /theme/i }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  const dark = await contrast();
+  expect(dark.scheme).toBe("dark");
+  expect(dark.ratio).toBeGreaterThanOrEqual(4.5);
+});
+
 test("has one h1 and alt text on every image", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
