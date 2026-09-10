@@ -2,14 +2,15 @@
 // must be in the middleware's KNOWN_PATHS, and every KNOWN_PATHS entry must
 // exist, or the middleware would answer a real file with a 404 (or wave an
 // unknown path through to the HTML 404 for every client). Next's own
-// payload files (`__next.*.txt`, `_not-found*`) and hashed assets under
-// `_next/` are passed through by the middleware and skipped here.
+// payload files (`__next.*.txt`, `_not-found*`, per isNextInternal) and
+// hashed assets under `_next/` are passed through by the middleware and
+// skipped here.
 
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { KNOWN_PATHS } from "../middleware";
+import { KNOWN_PATHS, isNextInternal } from "../middleware";
 
 const out = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "out");
 if (!existsSync(path.join(out, "index.html"))) {
@@ -26,7 +27,7 @@ function walk(dir: string): string[] {
 
 const published = walk(out)
   .map((file) => `/${path.relative(out, file).split(path.sep).join("/")}`)
-  .filter((p) => !p.startsWith("/_"))
+  .filter((p) => !p.startsWith("/_next/") && !isNextInternal(p))
   .map((p) => (p === "/index.html" ? "/" : p));
 
 const unlisted = published.filter((p) => !KNOWN_PATHS.has(p));

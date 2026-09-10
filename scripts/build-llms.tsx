@@ -98,7 +98,7 @@ const llms = [
 // for JSON clients, Markdown for everyone else who is not a browser.
 const notFound = {
   description:
-    "No resource at this path. The body follows the Accept header: an RFC 9457 problem document for `application/json` or `application/problem+json`, the site's HTML 404 page for `text/html`, and otherwise (including `*/*` and no Accept header) a short Markdown note. Every variant links the home page, the Markdown page, llms.txt, this document, the résumé PDF and the sitemap.",
+    "No resource at this path. The body follows the Accept header: an RFC 9457 problem document for `application/json` or `application/problem+json` (and by default under `/api/`, `/v1/` and `/graphql`), the site's HTML 404 page for `text/html`, and otherwise (including `*/*` and no Accept header) a short Markdown note. Every variant links the home page, the Markdown page, llms.txt, this document, the résumé PDF and the sitemap.",
   headers: { Vary: { schema: { type: "string", enum: ["Accept"] } } },
   content: {
     "text/markdown": { schema: { type: "string" } },
@@ -140,7 +140,8 @@ const operation = (
     operationId,
     summary,
     description,
-    responses: { ...responses, "404": { $ref: "#/components/responses/NotFound" } },
+    // Inlined rather than $ref'd: not every reader resolves response references.
+    responses: { ...responses, "404": notFound },
   },
 });
 

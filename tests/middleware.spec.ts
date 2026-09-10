@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import middleware, { KNOWN_PATHS, config, preferred } from "../middleware";
+import middleware, { KNOWN_PATHS, config, isNextInternal, looksLikeApi, preferred } from "../middleware";
 
 // The middleware runs on Vercel, not in the static server the smoke tests
 // use, so it is exercised here directly with Request objects. `next()` and
@@ -42,12 +42,51 @@ test("serves the page as Markdown at / for clients that prefer it", () => {
 });
 
 test("passes every published path and Next's own files through to the filesystem", () => {
-  for (const path of [...KNOWN_PATHS, "/index.txt", "/__next._tree.txt", "/_not-found.html"]) {
+  for (const path of [
+    ...KNOWN_PATHS,
+    "/index.txt",
+    "/__next._tree.txt",
+    "/__next.__PAGE__.txt",
+    "/_not-found.html",
+    "/_not-found/__next._index.txt",
+  ]) {
     const response = call(path, "*/*");
     expect(response.headers.get("x-middleware-next"), path).toBe("1");
     expect(response.status, path).toBe(200);
   }
   expect(config.matcher).toEqual(["/((?!_next/).*)"]);
+
+  // Only Next's files get the underscore pass; any other `_` path is a miss.
+  expect(isNextInternal("/__next._full.txt")).toBe(true);
+  expect(isNextInternal("/_not-found.txt")).toBe(true);
+  for (const path of ["/__ora-404-probe-ga08jq8v", "/_probe", "/__next", "/_"]) {
+    expect(isNextInternal(path), path).toBe(false);
+    const response = call(path, "*/*");
+    expect(response.status, path).toBe(404);
+    expect(response.headers.get("content-type"), path).toBe("text/markdown; charset=utf-8");
+  }
+});
+
+test("treats API-shaped paths as calls from programs", async () => {
+  for (const path of ["/api", "/api/", "/api/v1", "/api/v1/things", "/v1", "/v2/probe", "/graphql", "/graphql/"]) {
+    expect(looksLikeApi(path), path).toBe(true);
+  }
+  for (const path of ["/apis", "/v1x", "/version", "/nope", "/api-docs", "/graphql-playground"]) {
+    expect(looksLikeApi(path), path).toBe(false);
+  }
+
+  // No Accept, `*/*` or JSON: a problem document. An explicit preference for
+  // Markdown or HTML is still honoured.
+  for (const accept of [undefined, "*/*", "application/json", "application/json, */*;q=0.5"]) {
+    const response = call("/api/v1/orank-probe-test", accept);
+    expect(response.status, String(accept)).toBe(404);
+    expect(response.headers.get("content-type"), String(accept)).toBe("application/problem+json");
+    const problem = (await response.json()) as { code: string; instance: string };
+    expect(problem.code).toBe("not_found");
+    expect(problem.instance).toBe("/api/v1/orank-probe-test");
+  }
+  expect(call("/api/v1/x", "text/markdown").headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+  expect(call("/api/v1/x", BROWSER).headers.get("x-middleware-next")).toBe("1");
 });
 
 test("answers unknown paths with a 404 in the shape the client can read", async () => {
