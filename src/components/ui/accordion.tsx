@@ -55,11 +55,12 @@ function Chevron({ className }: { className?: string }) {
 // closed; only the chevron is muted, and it turns when the panel is open.
 function AccordionTrigger({
   className,
+  headerClassName,
   children,
   ...props
-}: AccordionPrimitive.Trigger.Props) {
+}: AccordionPrimitive.Trigger.Props & { headerClassName?: string }) {
   return (
-    <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Header className={cn("flex", headerClassName)}>
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
@@ -97,9 +98,10 @@ function useAnimateOpen() {
 // no transition; the panel then just appears.
 function AccordionContent({
   className,
+  panelClassName,
   children,
   ...props
-}: AccordionPrimitive.Panel.Props) {
+}: AccordionPrimitive.Panel.Props & { panelClassName?: string }) {
   const animate = useAnimateOpen();
   return (
     <AccordionPrimitive.Panel
@@ -108,6 +110,7 @@ function AccordionContent({
         "overflow-hidden text-sm",
         animate &&
           "h-(--accordion-panel-height) transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none",
+        panelClassName,
       )}
       {...props}
     >

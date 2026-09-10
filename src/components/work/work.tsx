@@ -3,8 +3,7 @@ import { RESUME } from "@/lib/site";
 import { companyViews } from "@/lib/work";
 
 import { SectionHeading } from "../typography/heading";
-import { WorkAccordion } from "./WorkAccordion";
-import { WorkTimeline } from "./WorkTimeline";
+import { WorkHistory } from "./WorkHistory";
 
 // Derived once, when the module is evaluated during the build: a content
 // mistake throws here and fails the build rather than shipping a blank section.
@@ -27,9 +26,7 @@ export default function Work() {
           Download the résumé (PDF)
         </a>
       </p>
-      {/* Both layouts are in the HTML; CSS shows the one that fits. */}
-      <WorkAccordion companies={work} className="md:hidden" />
-      <WorkTimeline companies={work} className="hidden md:block" />
+      <WorkHistory companies={work} />
     </section>
   );
 }

@@ -82,6 +82,20 @@ test("lays the header, content and footer out in one column on a desktop", async
   await expectOneColumn(page);
 });
 
+test("puts the dates in their own column beside the timeline on a desktop", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const work = page.getByRole("region", { name: "Work Experience" });
+  await expect(work.locator("ol")).toHaveCount(1);
+  const name = await work.getByRole("button", { name: /Anthropic/ }).boundingBox();
+  const date = await work.getByText("Aug 2024 – Present").first().boundingBox();
+  expect(date!.x + date!.width).toBeLessThan(name!.x);
+  expect(Math.abs(date!.y + date!.height / 2 - (name!.y + name!.height / 2))).toBeLessThan(8);
+  // Closed rows still open, and the first is open already.
+  await expect(work.getByRole("button", { name: /Anthropic/ })).toHaveAttribute("aria-expanded", "true");
+  await work.getByRole("button", { name: /Amazon/ }).click();
+  await expect(work.getByRole("button", { name: /Amazon/ })).toHaveAttribute("aria-expanded", "true");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
@@ -125,6 +139,15 @@ test.describe("on a phone", () => {
         .map(({ text, box }) => `${text} ${Math.round(box.width)}×${Math.round(box.height)}`),
     );
     expect(small).toEqual([]);
+  });
+
+  test("the work history is one list, with the date under the name", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const work = page.getByRole("region", { name: "Work Experience" });
+    await expect(work.locator("ol")).toHaveCount(1);
+    const name = await work.getByRole("button", { name: /Anthropic/ }).boundingBox();
+    const date = await work.getByText("Aug 2024 – Present").first().boundingBox();
+    expect(date!.y).toBeGreaterThan(name!.y + name!.height - 1);
   });
 
   test("the first company is open and a second can open beside it", async ({ page }) => {
