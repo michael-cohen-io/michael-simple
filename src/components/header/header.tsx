@@ -22,12 +22,9 @@ export default function Header() {
           className="group row-span-2 flex w-min select-none flex-col items-center gap-3 rounded-md outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {/* The mark is a visual logo; the link is named by its aria-label.
-              Monospace and foreground-coloured so it holds its own next to
-              the name; the brackets carry the accent. */}
-          <span aria-hidden="true" className="font-mono text-3xl font-semibold leading-none">
-            <span className="text-primary">{"<"}</span>
-            MC
-            <span className="text-primary">{">"}</span>
+              Monospace, semibold and all one pink. */}
+          <span aria-hidden="true" className="font-mono text-3xl font-semibold leading-none text-primary">
+            {"<mc>"}
           </span>
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full md:h-20 md:w-20">
             <Image
