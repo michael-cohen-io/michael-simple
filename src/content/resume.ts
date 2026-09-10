@@ -1,7 +1,7 @@
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
- * Everything on the résumé PDF that is not the work history. The history
+ * Everything on the resume PDF that is not the work history. The history
  * itself comes from ./work.ts, curated by the `resume` fields there, so the
  * PDF (public/MichaelCohenResume.pdf, built by scripts/build-resume.tsx on
  * every `bun run build`) can never drift from the site.

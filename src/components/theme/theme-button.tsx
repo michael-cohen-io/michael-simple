@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 
-import { useRef, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,56 +23,26 @@ export default function ThemeButton({ className }: { className?: string }) {
 
   // resolvedTheme is unknown on the server and during the first client render,
   // so the label is generic until mount. The icons are chosen by CSS, which lets
-  // the button render in the server HTML with no pop-in or layout shift.
+  // the button render in the server HTML with no pop-in or layout shift. The
+  // switch itself is instant: no transition, no wipe.
   const isDark = resolvedTheme === "dark";
   const label = !mounted
     ? "Toggle theme"
     : isDark
       ? "Switch to light theme"
       : "Switch to dark theme";
-  const button = useRef<HTMLButtonElement>(null);
-
-  // The switch is a View Transition: the new theme wipes out from the button
-  // in a circle over 350ms. The class and color-scheme are flipped on <html>
-  // inside the transition's callback so the "after" snapshot is the new
-  // theme; next-themes then stores the choice and lands on the same state.
-  // Browsers without the API, and visitors who ask for reduced motion, get
-  // an instant switch.
-  const toggle = () => {
-    if (!mounted) return;
-    const next = isDark ? "light" : "dark";
-    const root = document.documentElement;
-    const apply = () => {
-      root.classList.remove("light", "dark");
-      root.classList.add(next);
-      root.style.colorScheme = next;
-      setTheme(next);
-    };
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!document.startViewTransition || reduce || !button.current) return apply();
-    const { left, top, width, height } = button.current.getBoundingClientRect();
-    const x = left + width / 2;
-    const y = top + height / 2;
-    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-    const transition = document.startViewTransition(apply);
-    transition.ready.then(() => {
-      root.animate(
-        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-        { duration: 350, easing: "ease-in", pseudoElement: "::view-transition-new(root)" },
-      );
-    });
-  };
 
   return (
     <Button
-      ref={button}
       variant="ghost"
       className={cn(
         "h-11 w-11 rounded-full p-0 text-foreground hover:text-muted-foreground print:hidden",
         className,
       )}
       aria-label={label}
-      onClick={toggle}
+      onClick={() => {
+        if (mounted) setTheme(isDark ? "light" : "dark");
+      }}
     >
       {/* Two inline icons instead of an icon library; CSS shows one. */}
       <svg

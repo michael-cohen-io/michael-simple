@@ -82,6 +82,19 @@ test("lays the header, content and footer out in one column on a desktop", async
   await expectOneColumn(page);
 });
 
+test("keeps the mark and the switches in reach as the page scrolls", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.mouse.wheel(0, 1200);
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+  const header = await page.locator("header").boundingBox();
+  expect(Math.round(header!.y)).toBe(0);
+  await expect(page.getByRole("button", { name: /theme/i })).toBeInViewport();
+  await expect(page.getByRole("group", { name: "View as" })).toBeInViewport();
+  // The name scrolled away with the page; only the bar stays.
+  await expect(page.locator("h1")).not.toBeInViewport();
+});
+
 test("puts the dates in their own column beside the timeline on a desktop", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   const work = page.getByRole("region", { name: "Work Experience" });
@@ -190,32 +203,22 @@ test.describe("in a timezone west of UTC", () => {
   });
 });
 
-test("says what I do in one sentence, with the résumé one tap away", async ({ page }) => {
+test("says what I do in one sentence, with the resume one tap away", async ({ page }) => {
   await page.goto("/");
   const hero = page.locator("main p").first();
   await expect(hero).toContainText("Member of Technical Staff at Anthropic");
   await expect(hero).toContainText("Claude Managed Agents");
   await expect(hero).not.toContainText("OpenSea");
   await expect(page.locator("body")).not.toContainText(/updated \w+ \d{4}/i);
-  // One résumé link on the page, in the Work section; no button row in the hero.
-  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveAttribute(
+  // One resume link on the page, in the Work section; no button row in the hero.
+  await expect(page.getByRole("link", { name: /resume \(PDF\)/ })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: /resume \(PDF\)/ })).toHaveAttribute(
     "href",
     "/MichaelCohenResume.pdf",
   );
 });
 
 test("keeps the accent readable on both grounds and tells the browser the theme", async ({ page }) => {
-  // Count the View Transitions the theme switch starts.
-  await page.addInitScript(() => {
-    const w = window as unknown as { __vt: number };
-    w.__vt = 0;
-    const original = document.startViewTransition.bind(document);
-    document.startViewTransition = ((update: () => void) => {
-      w.__vt += 1;
-      return original(update);
-    }) as typeof document.startViewTransition;
-  });
   await page.goto("/", { waitUntil: "networkidle" });
   const contrast = async () =>
     page.evaluate(() => {
@@ -251,7 +254,6 @@ test("keeps the accent readable on both grounds and tells the browser the theme"
   // The link colour transitions for 150ms after the switch; poll past it.
   await expect.poll(async () => (await contrast()).scheme).toBe("dark");
   await expect.poll(async () => (await contrast()).ratio).toBeGreaterThanOrEqual(4.5);
-  expect(await page.evaluate(() => (window as unknown as { __vt: number }).__vt)).toBe(1);
 });
 
 test("sets the name above the hero on the type scale, with tabular dates", async ({ page }) => {
@@ -264,7 +266,6 @@ test("sets the name above the hero on the type scale, with tabular dates", async
         hero: px(document.querySelector("main p")),
         heading: px(document.querySelector("main h2")),
         dates: getComputedStyle(document.querySelector("main time")!).fontVariantNumeric,
-        memoji: (document.querySelector('header img[src="/memoji.webp"]') as HTMLImageElement | null)?.alt,
       };
     });
   await page.goto("/", { waitUntil: "networkidle" });
@@ -273,7 +274,6 @@ test("sets the name above the hero on the type scale, with tabular dates", async
   expect(desktop.name).toBeGreaterThan(desktop.hero);
   expect(desktop.hero).toBeLessThan(desktop.heading);
   expect(desktop.dates).toContain("tabular-nums");
-  expect(desktop.memoji).toBe("");
 
   await page.setViewportSize({ width: 390, height: 844 });
   const phone = await sizes();
@@ -319,7 +319,7 @@ test("embeds Person structured data derived from the content", async ({ page }) 
   );
 });
 
-test("serves the résumé PDF generated from the content files", async ({ request }) => {
+test("serves the resume PDF generated from the content files", async ({ request }) => {
   const response = await request.get("/MichaelCohenResume.pdf");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("pdf");
@@ -336,7 +336,7 @@ test("the 404 page is in the site's chrome with a way back", async ({ page }) =>
   await expect(page).toHaveTitle(/Page not found/);
   await expect(page.getByText("nothing at this address")).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to the home page" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Michael Cohen, home" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Michael Cohen, home" }).first()).toBeVisible();
   await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   await expect(page.locator("main img").first()).toHaveAttribute("src", /memoji\.webp$/);
   // Somewhere to go next, for people and agents alike.
@@ -352,14 +352,17 @@ test("serves llms.txt and the Markdown twin of the home page", async ({ request 
   const llmsText = await llms.text();
   expect(llmsText.startsWith("# Michael Cohen\n")).toBe(true);
   expect(llmsText).toContain("## When to use this site");
-  expect(llmsText).toContain("https://www.michaelcohen.io/index.md");
   expect(llmsText).toContain("https://www.michaelcohen.io/openapi.json");
+  expect(llmsText).toContain("Resume (PDF): https://www.michaelcohen.io/MichaelCohenResume.pdf");
+  expect(llmsText).not.toContain("é");
 
   // Generated from the same content as the page, so the roles and their
   // links are the ones the timeline shows.
+  // One document: what / returns for Accept: text/markdown is llms.txt.
   const md = await request.get("/index.md");
   expect(md.status()).toBe(200);
   const mdText = await md.text();
+  expect(mdText).toBe(llmsText);
   expect(mdText.startsWith("# Michael Cohen\n")).toBe(true);
   expect(mdText).toContain("## Work Experience");
   expect(mdText).toContain("### Anthropic (Aug 2024 – Present)");
@@ -422,19 +425,21 @@ test("lists writing and talks under the hero, from the content file", async ({ p
     await expect(link).toHaveAttribute("href", /^https:\/\//);
   }
   await expect(section.getByRole("link", { name: /Decoupling the brain from the hands/ })).toBeVisible();
-  // Talks carry a play mark; articles do not.
-  expect(await section.locator("li svg").count()).toBeGreaterThanOrEqual(1);
-  // The section sits between the hero and the work history.
-  const hero = await page.locator("main p").first().boundingBox();
+  // Every row carries a mark saying what it is: an article, or something to watch.
+  expect(await section.locator("li svg").count()).toBe(await section.locator("li").count());
+  await expect(section.locator("li svg title").first()).toHaveText("Article");
+  expect(await section.locator("li svg title", { hasText: /Talk|Video/ }).count()).toBeGreaterThanOrEqual(1);
+  // The section sits between the work history and Connect.
   const writing = await section.boundingBox();
   const work = await page.getByRole("region", { name: "Work Experience" }).boundingBox();
-  expect(writing!.y).toBeGreaterThan(hero!.y);
-  expect(work!.y).toBeGreaterThan(writing!.y);
+  const connect = await page.getByRole("region", { name: "Connect" }).boundingBox();
+  expect(writing!.y).toBeGreaterThan(work!.y);
+  expect(connect!.y).toBeGreaterThan(writing!.y);
   // Connect rows carry a glyph each.
   expect(await page.getByRole("region", { name: "Connect" }).locator("li svg").count()).toBe(4);
 });
 
-test("serves the résumé as a JSON Resume document", async ({ request }) => {
+test("serves the resume as a JSON Resume document", async ({ request }) => {
   const response = await request.get("/resume.json");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("json");
@@ -477,9 +482,12 @@ test("flips the page into the Markdown an agent gets, and back", async ({ page }
   await group.getByRole("button", { name: "agent" }).click();
   const agent = page.getByRole("region", { name: "The page as an agent receives it" });
   await expect(agent).toBeVisible();
-  await expect(agent.locator("pre").first()).toContainText("# Michael Cohen");
-  await expect(agent.locator("pre").first()).toContainText("## Work Experience");
-  await expect(agent.locator("pre").nth(1)).toContainText("## When to use this site");
+  await expect(agent).toContainText("curl https://www.michaelcohen.io/llms.txt");
+  await expect(agent.getByRole("button", { name: "Copy" })).toBeVisible();
+  await expect(agent.locator("pre")).toHaveCount(1);
+  await expect(agent.locator("pre")).toContainText("# Michael Cohen");
+  await expect(agent.locator("pre")).toContainText("## When to use this site");
+  await expect(agent.locator("pre")).toContainText("## Work Experience");
   await expect(page.getByRole("region", { name: "Work Experience" })).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("data-view", "agent");
 

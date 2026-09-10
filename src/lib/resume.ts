@@ -2,7 +2,7 @@ import type { Company } from "@/content/types";
 import type { MonthRange } from "@/lib/types";
 import { companyViews } from "@/lib/work";
 
-/** One dated block on the résumé: a role, or a whole company folded into one. */
+/** One dated block on the resume: a role, or a whole company folded into one. */
 export type ResumeBlock = MonthRange & {
   company: string;
   url: string;
@@ -13,7 +13,7 @@ export type ResumeBlock = MonthRange & {
 };
 
 /**
- * The work history as the one-page résumé shows it. Companies and roles
+ * The work history as the one-page resume shows it. Companies and roles
  * marked `resume: false` are left out, a role's `resume.bullets` replace its
  * site bullets, and a company with `resume.role` collapses to one block over
  * its remaining tenure. Order and dates come from the same helper as the

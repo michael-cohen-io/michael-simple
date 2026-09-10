@@ -1,27 +1,43 @@
-import { writing } from "@/content/writing";
+import { writing, type Piece } from "@/content/writing";
 
 import { SectionHeading } from "../typography/heading";
 
-/** A small play mark for talks and videos; articles get none. */
-function PlayMark() {
+/** What kind of thing each row is: a page of text, or something to watch. */
+function KindMark({ kind }: { kind: Piece["kind"] }) {
+  const common = {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "mt-1 size-4 shrink-0 text-muted-foreground",
+  };
+  if (kind === "article") {
+    return (
+      <svg {...common}>
+        <title>Article</title>
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8" />
+      </svg>
+    );
+  }
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-      className="size-3.5 shrink-0 text-primary"
-    >
-      <path d="M8 5.5v13l11-6.5z" />
+    <svg {...common}>
+      <title>{kind === "video" ? "Video" : "Talk"}</title>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m10 8 6 4-6 4z" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
 /**
- * Writing and talks: the evidence under the hero sentence. One row per
- * piece from content/writing.ts, the title linked, the venue and one line
- * of summary under it. No dates, by design; the list is curated, not a
- * feed.
+ * Writing and talks: the public work behind the work history. One row per
+ * piece from content/writing.ts, a mark for its kind, the title linked, the
+ * venue and one line of summary under it. No dates, by design; the list is
+ * curated, not a feed.
  */
 export default function Writing() {
   return (
@@ -29,23 +45,23 @@ export default function Writing() {
       <SectionHeading id="writing-heading">Writing &amp; Talks</SectionHeading>
       <ul className="divide-y">
         {writing.map((piece) => (
-          <li key={piece.url} className="flex flex-col gap-1 py-3 first:pt-1 last:pb-0">
-            <span className="flex items-center gap-2">
-              {piece.kind !== "article" && <PlayMark />}
+          <li key={piece.url} className="flex gap-3 py-3 first:pt-1 last:pb-0">
+            <KindMark kind={piece.kind} />
+            <div className="flex min-w-0 flex-col gap-1">
               <a
                 href={piece.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-1 font-semibold underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
+                className="w-fit py-1 font-semibold underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
               >
                 {piece.title}
                 <span className="sr-only"> (opens in new tab)</span>
               </a>
-            </span>
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {piece.venue}
-            </span>
-            <p className="max-w-prose text-sm text-muted-foreground">{piece.summary}</p>
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {piece.venue}
+              </span>
+              <p className="max-w-prose text-sm text-muted-foreground">{piece.summary}</p>
+            </div>
           </li>
         ))}
       </ul>

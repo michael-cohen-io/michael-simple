@@ -81,7 +81,7 @@ export const companies: Company[] = [
     name: "Amazon",
     url: "https://www.amazon.com/",
     logo: "/amazon.svg",
-    // One block on the résumé: three years as a Software Engineer.
+    // One block on the resume: three years as a Software Engineer.
     resume: {
       role: "Software Engineer",
       bullets: [

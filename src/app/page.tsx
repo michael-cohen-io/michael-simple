@@ -12,8 +12,8 @@ export default function Home() {
       {/* The human view; hidden by CSS while the agent view is showing. */}
       <div className="human-view flex w-full flex-col items-center gap-16 md:gap-20">
         <About />
-        <Writing />
         <Work />
+        <Writing />
         <Contact />
       </div>
       <AgentView />
