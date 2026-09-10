@@ -164,4 +164,26 @@
     font-weight: 400;
     word-break: break-all;
   }
+
+  /* The /resume page prints as the document itself: no site header or
+     footer, Letter with half-inch margins, and no URL after each link (the
+     company names and bullets would otherwise be followed by long URLs). */
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+  body:has([data-resume]) > :is(header, footer),
+  body:has([data-resume]) > * > :is(header, footer) {
+    display: none;
+  }
+  body:has([data-resume]) {
+    font-size: 10.5pt;
+  }
+  body:has([data-resume]) main {
+    max-width: none;
+    padding: 0;
+  }
+  [data-resume] a[href^="http"]::after {
+    content: none;
+  }
 }

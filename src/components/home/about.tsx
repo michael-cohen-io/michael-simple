@@ -1,7 +1,8 @@
-import { Download, Mail } from "lucide-react";
+import { FileText, Mail } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { CONTACT_EMAIL, RESUME } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /** A company named in the hero, linked to its site. */
 function Employer({ href, children }: { href: string; children: string }) {
@@ -40,10 +41,10 @@ export default function About() {
       </p>
       <div className="flex flex-wrap gap-3">
         <Button asChild>
-          <a href={RESUME.href} download={RESUME.download}>
-            <Download aria-hidden="true" className="mr-2 h-4 w-4" />
-            Download résumé (PDF)
-          </a>
+          <Link href="/resume">
+            <FileText aria-hidden="true" className="mr-2 h-4 w-4" />
+            Résumé
+          </Link>
         </Button>
         <Button variant="outline" asChild>
           <a href={`mailto:${CONTACT_EMAIL}`}>
