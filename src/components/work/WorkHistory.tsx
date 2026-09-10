@@ -62,12 +62,12 @@ export function WorkHistory({
               row has no line and no extra height. */}
           <div
             aria-hidden="true"
-            className="col-start-1 row-start-1 row-end-4 flex min-h-16 w-4 flex-col items-center group-last:min-h-0 @2xl:col-start-2"
+            className="timeline-spine col-start-1 row-start-1 row-end-4 flex min-h-16 w-4 flex-col items-center group-last:min-h-0 @2xl:col-start-2"
           >
-            <span className="flex h-12 shrink-0 items-center">
-              <span className="size-2 rounded-full bg-primary ring-4 ring-background forced-colors:bg-[CanvasText]" />
+            <span className="timeline-dot-box flex h-12 shrink-0 items-center">
+              <span className="timeline-dot size-2 rounded-full bg-primary ring-4 ring-background forced-colors:bg-[CanvasText]" />
             </span>
-            <span className="w-px flex-1 bg-border group-last:hidden forced-colors:bg-[CanvasText]" />
+            <span className="timeline-line w-px flex-1 bg-border group-last:hidden forced-colors:bg-[CanvasText]" />
           </div>
           <AccordionTrigger
             headerClassName="col-start-2 row-start-1 @2xl:col-start-3"

@@ -90,6 +90,19 @@ test("puts the dates in their own column beside the timeline on a desktop", asyn
   const date = await work.getByText("Aug 2024 – Present").first().boundingBox();
   expect(date!.x + date!.width).toBeLessThan(name!.x);
   expect(Math.abs(date!.y + date!.height / 2 - (name!.y + name!.height / 2))).toBeLessThan(8);
+  // The spine draws on the scroll timeline (Chromium supports it; reduced
+  // motion is off in this browser).
+  const spine = await page.evaluate(() => {
+    const line = document.querySelector(".timeline-line") as HTMLElement;
+    const dot = document.querySelector(".timeline-dot") as HTMLElement;
+    // animation-timeline is not in the DOM typings yet.
+    const timeline = (el: HTMLElement) => getComputedStyle(el).getPropertyValue("animation-timeline");
+    return { line: timeline(line), dot: timeline(dot), drawn: getComputedStyle(line).transform };
+  });
+  expect(spine.line).toBe("--timeline-dot");
+  expect(spine.dot).toBe("--timeline-dot");
+  // The first row is in view on load, so its line is already fully drawn.
+  expect(spine.drawn === "none" || spine.drawn.startsWith("matrix(1, 0, 0, 1")).toBe(true);
   // Closed rows still open, and the first is open already.
   await expect(work.getByRole("button", { name: /Anthropic/ })).toHaveAttribute("aria-expanded", "true");
   await work.getByRole("button", { name: /Amazon/ }).click();
@@ -190,6 +203,16 @@ test("says what I do in one sentence, with the résumé one tap away", async ({ 
 });
 
 test("keeps the accent readable on both grounds and tells the browser the theme", async ({ page }) => {
+  // Count the View Transitions the theme switch starts.
+  await page.addInitScript(() => {
+    const w = window as unknown as { __vt: number };
+    w.__vt = 0;
+    const original = document.startViewTransition.bind(document);
+    document.startViewTransition = ((update: () => void) => {
+      w.__vt += 1;
+      return original(update);
+    }) as typeof document.startViewTransition;
+  });
   await page.goto("/", { waitUntil: "networkidle" });
   const contrast = async () =>
     page.evaluate(() => {
@@ -225,6 +248,7 @@ test("keeps the accent readable on both grounds and tells the browser the theme"
   // The link colour transitions for 150ms after the switch; poll past it.
   await expect.poll(async () => (await contrast()).scheme).toBe("dark");
   await expect.poll(async () => (await contrast()).ratio).toBeGreaterThanOrEqual(4.5);
+  expect(await page.evaluate(() => (window as unknown as { __vt: number }).__vt)).toBe(1);
 });
 
 test("sets the name above the hero on the type scale, with tabular dates", async ({ page }) => {

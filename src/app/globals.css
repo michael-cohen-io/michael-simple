@@ -132,6 +132,69 @@
   }
 }
 
+/*
+ * The theme switch (theme-button.tsx) runs as a View Transition and clips
+ * the new theme's snapshot in a circle from the button. The default
+ * cross-fade is switched off so the wipe is the only animation, and the new
+ * snapshot sits on top of the old one.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+/*
+ * The timeline draws itself: as a row scrolls into view its stretch of line
+ * grows down from the dot and the dot fills with the accent, on the scroll
+ * timeline, off the main thread. Rows already past the range are simply
+ * drawn, so nothing moves on load. Only where the browser has scroll-driven
+ * animations and the visitor has not asked for reduced motion.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Both animations follow the dot's box, not the (possibly tall) row:
+       the line has finished drawing by the time the dot is a third of the
+       way up the screen, however long the card under it is. */
+    .timeline-spine {
+      timeline-scope: --timeline-dot;
+    }
+    .timeline-dot-box {
+      view-timeline: --timeline-dot block;
+    }
+    .timeline-line {
+      transform-origin: top;
+      animation: timeline-draw linear both;
+      animation-timeline: --timeline-dot;
+      animation-range: entry 0% cover 30%;
+    }
+    .timeline-dot {
+      animation: timeline-fill linear both;
+      animation-timeline: --timeline-dot;
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+@keyframes timeline-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes timeline-fill {
+  from {
+    background-color: var(--border);
+  }
+  to {
+    background-color: var(--primary);
+  }
+}
+
 /* Visitors who ask for reduced motion get no animation or transition. */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -114,7 +114,19 @@ function AccordionContent({
       )}
       {...props}
     >
-      <div className={cn("pb-4 pt-0", className)}>{children}</div>
+      {/* Base UI marks the panel's first frame with data-starting-style; the
+          content starts faded and a few pixels up and settles as the height
+          opens, one transition on top of the other. */}
+      <div
+        className={cn(
+          "pb-4 pt-0",
+          animate &&
+            "transition-[opacity,translate] duration-200 ease-out in-data-starting-style:-translate-y-1 in-data-starting-style:opacity-0 motion-reduce:transition-none",
+          className,
+        )}
+      >
+        {children}
+      </div>
     </AccordionPrimitive.Panel>
   );
 }
