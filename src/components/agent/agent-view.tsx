@@ -5,39 +5,48 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { SITE_URL } from "@/lib/site";
 import { getServerView, getView, subscribe } from "@/lib/view-store";
 
-type Files = { markdown: string; llms: string };
+const command = `curl ${SITE_URL}/llms.txt`;
 
-const host = new URL(SITE_URL).host;
-
-/** A line as it would be typed into a terminal: the prompt in the accent. */
-function Command({ children }: { children: string }) {
+/** Copies the command to the clipboard and says so for a moment. */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
   return (
-    <p className="text-muted-foreground">
-      <span className="select-none text-primary">$ </span>
-      {children}
-    </p>
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => setCopied(true), () => setCopied(false));
+      }}
+      className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      {copied ? "Copied" : "Copy"}
+    </button>
   );
 }
 
 /**
- * The page as an agent gets it: the Markdown that `/` returns for
- * `Accept: text/markdown`, then the llms.txt index, fetched from this same
- * site the first time the switch is flipped (they are files in the export,
- * so nothing is duplicated in the HTML). Hidden, and empty, until then.
+ * The page as an agent gets it: llms.txt, the one document that is also
+ * what `/` returns for `Accept: text/markdown`, fetched from this same site
+ * the first time the switch is flipped (it is a file in the export, so
+ * nothing is duplicated in the HTML). Hidden, and empty, until then.
  */
 export default function AgentView() {
   const view = useSyncExternalStore(subscribe, getView, getServerView);
-  const [files, setFiles] = useState<Files | null>(null);
+  const [text, setText] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (view !== "agent" || files) return;
+    if (view !== "agent" || text) return;
     let cancelled = false;
-    Promise.all([fetch("/index.md"), fetch("/llms.txt")])
-      .then(async ([markdown, llms]) => {
-        if (!markdown.ok || !llms.ok) throw new Error("not ok");
-        const next = { markdown: await markdown.text(), llms: await llms.text() };
-        if (!cancelled) setFiles(next);
+    fetch("/llms.txt")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("not ok");
+        const body = await response.text();
+        if (!cancelled) setText(body);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -45,42 +54,36 @@ export default function AgentView() {
     return () => {
       cancelled = true;
     };
-  }, [view, files]);
+  }, [view, text]);
 
   if (view !== "agent") return null;
 
   return (
     <section
       aria-label="The page as an agent receives it"
-      className="agent-view flex w-full flex-col gap-6 font-mono text-[13px] leading-relaxed"
+      className="agent-view flex w-full flex-col gap-4 font-mono text-[13px] leading-relaxed"
     >
-      <div className="flex flex-col gap-1">
-        <Command>{`curl -H "Accept: text/markdown" https://${host}/`}</Command>
-        <p className="text-muted-foreground">
-          <span className="text-primary">200</span> text/markdown; charset=utf-8 · Vary: Accept
+      <div className="flex items-center gap-3">
+        <p className="min-w-0 break-all text-muted-foreground">
+          <span className="select-none text-primary">$ </span>
+          {command}
         </p>
+        <CopyButton text={command} />
       </div>
       {failed ? (
-        <p>Could not load /index.md from this host.</p>
-      ) : files ? (
-        <pre className="whitespace-pre-wrap break-words rounded-lg bg-muted p-4">{files.markdown}</pre>
+        <p>Could not load /llms.txt from this host.</p>
+      ) : text ? (
+        <pre className="whitespace-pre-wrap break-words rounded-lg bg-muted p-4">{text}</pre>
       ) : (
         <p className="text-muted-foreground">Fetching…</p>
       )}
-      <div className="flex flex-col gap-1">
-        <Command>{`curl https://${host}/llms.txt`}</Command>
-        {files && <pre className="whitespace-pre-wrap break-words rounded-lg bg-muted p-4">{files.llms}</pre>}
-      </div>
-      <div className="flex flex-col gap-1">
-        <Command>{`curl -H "Accept: application/json" https://${host}/anything-else`}</Command>
-        <p className="text-muted-foreground">
-          <span className="text-primary">404</span> application/problem+json, with a code, a hint and every
-          resource on the site. Also served:{" "}
-          <a href="/resume.json" className="underline underline-offset-4">/resume.json</a>,{" "}
-          <a href="/openapi.json" className="underline underline-offset-4">/openapi.json</a>,{" "}
-          <a href="/MichaelCohenResume.pdf" className="underline underline-offset-4">/MichaelCohenResume.pdf</a>.
-        </p>
-      </div>
+      <p className="text-muted-foreground">
+        The same document comes back from <span className="text-foreground">/</span> for{" "}
+        <span className="text-foreground">Accept: text/markdown</span>. Also served:{" "}
+        <a href="/resume.json" className="underline underline-offset-4">/resume.json</a>,{" "}
+        <a href="/openapi.json" className="underline underline-offset-4">/openapi.json</a>,{" "}
+        <a href="/MichaelCohenResume.pdf" className="underline underline-offset-4">/MichaelCohenResume.pdf</a>.
+      </p>
     </section>
   );
 }

@@ -14,8 +14,8 @@ export default function Home() {
       <div className="human-view flex w-full flex-col items-center gap-16 md:gap-20">
         <About />
         <Ask />
-        <Writing />
         <Work />
+        <Writing />
         <Contact />
       </div>
       <AgentView />

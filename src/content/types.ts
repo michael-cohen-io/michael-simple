@@ -8,7 +8,7 @@
 export type Month = string;
 
 /**
- * How a role appears on the one-page résumé PDF, which is generated from this
+ * How a role appears on the one-page resume PDF, which is generated from this
  * same file (see scripts/build-resume.tsx). Leave it out and the role is
  * copied to the PDF as is; `false` leaves it off; `{ bullets }` swaps in
  * shorter bullets for the PDF while the site keeps the full ones.

@@ -129,7 +129,7 @@ function markdown404(pathname: string): Response {
     `- Home: ${RESOURCES.home} (as Markdown: ${RESOURCES.markdown})`,
     `- What this site is for and where things live: ${RESOURCES.llms}`,
     `- Every fetchable resource, as OpenAPI: ${RESOURCES.openapi}`,
-    `- Résumé (one-page PDF): ${RESOURCES.resume}`,
+    `- Resume (PDF): ${RESOURCES.resume}`,
     `- Sitemap: ${RESOURCES.sitemap}`,
     "",
   ].join("\n");

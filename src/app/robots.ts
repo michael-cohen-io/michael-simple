@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/site";
 export const dynamic = "force-static";
 
 /**
- * Everything is crawlable, the résumé PDF included: it is kept out of the
+ * Everything is crawlable, the resume PDF included: it is kept out of the
  * index with an X-Robots-Tag header instead, which a crawler can only read if
  * it is allowed to fetch the file.
  */

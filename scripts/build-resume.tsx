@@ -2,7 +2,7 @@
 // src/content/resume.ts. Runs before every `bun run build` and `bun run dev`
 // (the prebuild/predev scripts), so the PDF always matches the site; it is
 // not committed. Fails the build when the content is inconsistent (see
-// lib/resume.ts) or the résumé no longer fits on one page.
+// lib/resume.ts) or the resume no longer fits on one page.
 //
 //   bun run resume:pdf
 
@@ -29,7 +29,7 @@ const bytes = await readFile(output);
 const pages = bytes.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length ?? 0;
 if (pages !== 1) {
   throw new Error(
-    `The résumé runs to ${pages} pages; shorten a role's resume.bullets in content/work.ts until it fits on one`,
+    `The resume runs to ${pages} pages; shorten a role's resume.bullets in content/work.ts until it fits on one`,
   );
 }
 console.log(

@@ -7,7 +7,7 @@ The source of [michaelcohen.io](https://michaelcohen.io), a one-page personal si
 - [Next.js 16](https://nextjs.org/) (App Router, React 19.3, React Server Components, Turbopack, the React Compiler) as a static export: `next build` writes the whole site to `out/`
 - [Tailwind CSS 4](https://tailwindcss.com/) (configured in [`src/app/globals.css`](./src/app/globals.css), no `tailwind.config`; an OKLCH palette of one pink) and a few [shadcn/ui](https://ui.shadcn.com/) primitives on [Base UI](https://base-ui.com/) (accordion, button, item, separator)
 - The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time; writing and talks are [`src/content/writing.ts`](./src/content/writing.ts)
-- A human | agent switch in the header shows the page as an agent receives it: the Markdown twin and the llms.txt index
+- A human | agent switch in the header shows the page as an agent receives it: `llms.txt`, which is also what `/` returns as Markdown
 - An "Ask about my work" box under the hero, answered by a [Claude Managed Agent](https://claude.com/blog/claude-managed-agents) grounded on the page's own Markdown, through one Vercel Function ([`api/ask.ts`](./api/ask.ts)); see the section below
 - [Raleway](https://fonts.google.com/specimen/Raleway) self-hosted through `next/font`
 - [bun](https://bun.sh/) as the package manager and script runner; deployed on Vercel as static files, with the response headers and the `*.vercel.app` redirect in [`vercel.json`](./vercel.json), and one [Routing Middleware](https://vercel.com/docs/routing-middleware), [`middleware.ts`](./middleware.ts), that serves `/` as Markdown to clients that prefer it and gives unknown paths a 404 body agents can read (Markdown, or an RFC 9457 problem document for JSON clients)
@@ -30,11 +30,11 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` and the middleware tests (build first; `bunx playwright install chromium` once) |
-| `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md`, `public/llms.txt`, `public/resume.json` and `public/openapi.json` from `src/content` (runs on its own before `dev` and `build`) |
+| `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md` and `public/llms.txt` (one document), `public/resume.json` and `public/openapi.json` from `src/content` (runs on its own before `dev` and `build`) |
 
-## Résumé
+## Resume
 
-The PDF behind "Download résumé" is generated, not kept in the repo. [`scripts/build-resume.tsx`](./scripts/build-resume.tsx) renders [`src/resume/document.tsx`](./src/resume/document.tsx) (react-pdf, with Raleway bundled in `src/resume/fonts/`) from the same [`src/content/work.ts`](./src/content/work.ts) the page uses, plus [`src/content/resume.ts`](./src/content/resume.ts) for the contact line, education and skills. It runs before every `bun run dev` and `bun run build`, so the download can never lag the site. Roles carry an optional `resume` field in `work.ts` to shorten their bullets for the one-pager, fold a company into a single block, or leave it off; the build fails if the result exceeds one page.
+The PDF behind "Download resume" is generated, not kept in the repo. [`scripts/build-resume.tsx`](./scripts/build-resume.tsx) renders [`src/resume/document.tsx`](./src/resume/document.tsx) (react-pdf, with Raleway bundled in `src/resume/fonts/`) from the same [`src/content/work.ts`](./src/content/work.ts) the page uses, plus [`src/content/resume.ts`](./src/content/resume.ts) for the contact line, education and skills. It runs before every `bun run dev` and `bun run build`, so the download can never lag the site. Roles carry an optional `resume` field in `work.ts` to shorten their bullets for the one-pager, fold a company into a single block, or leave it off; the build fails if the result exceeds one page.
 
 ## Ask about my work
 
@@ -57,4 +57,4 @@ In production, [Vercel Analytics](https://vercel.com/docs/analytics) counts page
 
 ## Licence
 
-The code is MIT licensed (see [LICENSE](./LICENSE)). The photos, logos, résumé and personal text are not.
+The code is MIT licensed (see [LICENSE](./LICENSE)). The photos, logos, resume and personal text are not.

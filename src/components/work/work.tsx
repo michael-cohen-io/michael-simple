@@ -23,7 +23,7 @@ export default function Work() {
           download={RESUME.download}
           className="py-2 underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
-          Download the résumé (PDF)
+          Download the resume (PDF)
         </a>
       </p>
       <WorkHistory companies={work} />

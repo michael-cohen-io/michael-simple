@@ -6,7 +6,7 @@ import { companyViews } from "@/lib/work";
 /**
  * Schema.org structured data for the home page: a ProfilePage whose main
  * entity is the Person, with the current employer and title taken from the
- * work history, the school from the résumé content and `sameAs` links to
+ * work history, the school from the resume content and `sameAs` links to
  * the profiles in lib/site.ts. "Michael Cohen" is a crowded name; the
  * sameAs links are what let a search engine tell this one apart.
  *

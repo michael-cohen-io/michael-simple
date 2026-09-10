@@ -86,7 +86,7 @@
     color-scheme: dark;
     --background: oklch(0.183 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.183 0 0);
+    --card: oklch(0.215 0.012 var(--pink-hue));
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.183 0 0);
     --popover-foreground: oklch(0.985 0 0);
@@ -135,21 +135,6 @@ html[data-view="agent"] .human-view {
   a {
     text-decoration: underline;
   }
-}
-
-/*
- * The theme switch (theme-button.tsx) runs as a View Transition and clips
- * the new theme's snapshot in a circle from the button. The default
- * cross-fade is switched off so the wipe is the only animation, and the new
- * snapshot sits on top of the old one.
- */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-new(root) {
-  z-index: 1;
 }
 
 /*

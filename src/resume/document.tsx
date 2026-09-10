@@ -8,7 +8,7 @@ import type { Resume } from "@/content/resume";
 import type { ResumeBlock } from "@/lib/resume";
 
 /**
- * The résumé as a react-pdf document: US Letter, half-inch margins, Raleway
+ * The resume as a react-pdf document: US Letter, half-inch margins, Raleway
  * like the site. Rendered to public/MichaelCohenResume.pdf by
  * scripts/build-resume.tsx; nothing here is imported by the site itself.
  */
@@ -139,9 +139,9 @@ export function ResumeDocument({ resume, blocks }: { resume: Resume; blocks: Res
   const siteLabel = resume.site.replace(/^https?:\/\//, "");
   return (
     <Document
-      title={`${resume.name} — Résumé`}
+      title={`${resume.name} — Resume`}
       author={resume.name}
-      subject="Résumé"
+      subject="Resume"
       language="en-US"
       creator={siteLabel}
       producer="react-pdf"
