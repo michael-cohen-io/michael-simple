@@ -1,8 +1,7 @@
-import { FileText, Mail } from "lucide-react";
-import Link from "next/link";
+import { Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, RESUME } from "@/lib/site";
 
 /**
  * A company named in the hero, linked to its site. Underlined at rest, not
@@ -38,19 +37,20 @@ export default function About() {
         <code className="whitespace-nowrap rounded-md bg-muted px-[0.3rem] py-[0.2rem] font-mono text-[0.8em] font-semibold">
           Hello, World!
         </code>{" "}
-        I&apos;m Michael Cohen, a software engineer on the Agentic Systems team at{" "}
-        <Employer href="https://www.anthropic.com">Anthropic</Employer>, based
-        in Brooklyn, NY. Before that I led the Creator team at{" "}
-        <Employer href="https://opensea.io">OpenSea</Employer> and built AWS
-        Backup and Amazon Live at{" "}
-        <Employer href="https://www.amazon.com">Amazon</Employer>.
+        I&apos;m Michael Cohen, a Member of Technical Staff at{" "}
+        <Employer href="https://www.anthropic.com">Anthropic</Employer>,
+        currently on the Agentic Systems team building{" "}
+        <Employer href="https://claude.com/blog/claude-managed-agents">
+          Claude Managed Agents
+        </Employer>
+        .
       </p>
       <div className="flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/resume">
-            <FileText aria-hidden="true" className="mr-2 h-4 w-4" />
-            Résumé
-          </Link>
+          <a href={RESUME.href} download={RESUME.download}>
+            <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+            Download résumé (PDF)
+          </a>
         </Button>
         <Button variant="outline" asChild>
           <a href={`mailto:${CONTACT_EMAIL}`}>

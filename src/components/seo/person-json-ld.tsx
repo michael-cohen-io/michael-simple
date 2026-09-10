@@ -51,8 +51,6 @@ export function PersonJsonLd() {
     "@type": "ProfilePage",
     "@id": `${SITE_URL}/#profile`,
     url: `${SITE_URL}/`,
-    // A YYYY-MM month is a valid ISO 8601 date; the content is dated that finely.
-    dateModified: resume.updated,
     mainEntity: person,
   };
 

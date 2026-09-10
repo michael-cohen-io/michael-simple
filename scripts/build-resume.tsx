@@ -1,8 +1,8 @@
 // Renders public/MichaelCohenResume.pdf from src/content/work.ts and
 // src/content/resume.ts. Runs before every `bun run build` and `bun run dev`
 // (the prebuild/predev scripts), so the PDF always matches the site; it is
-// not committed. Fails the build when the content is inconsistent or the
-// résumé no longer fits on one page.
+// not committed. Fails the build when the content is inconsistent (see
+// lib/resume.ts) or the résumé no longer fits on one page.
 //
 //   bun run resume:pdf
 
@@ -14,19 +14,13 @@ import { renderToFile } from "@react-pdf/renderer";
 
 import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
-import { newestMonth, resumeBlocks } from "@/lib/resume";
+import { resumeBlocks } from "@/lib/resume";
 import { ResumeDocument } from "@/resume/document";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "public", "MichaelCohenResume.pdf");
 
 const blocks = resumeBlocks(companies);
-const newest = newestMonth(blocks);
-if (resume.updated < newest) {
-  throw new Error(
-    `content/resume.ts: updated is ${resume.updated} but the work history reaches ${newest}; bump it`,
-  );
-}
 
 await renderToFile(<ResumeDocument resume={resume} blocks={blocks} />, output);
 
@@ -39,5 +33,5 @@ if (pages !== 1) {
   );
 }
 console.log(
-  `wrote ${path.relative(root, output)}: ${pages} page, ${Math.round(bytes.length / 1024)} kB, ${blocks.length} roles, updated ${resume.updated}`,
+  `wrote ${path.relative(root, output)}: ${pages} page, ${Math.round(bytes.length / 1024)} kB, ${blocks.length} roles`,
 );

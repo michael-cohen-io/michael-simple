@@ -1,9 +1,6 @@
-import Link from "next/link";
-
-import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
 import { RESUME } from "@/lib/site";
-import { companyViews, monthLabel } from "@/lib/work";
+import { companyViews } from "@/lib/work";
 
 import { SectionHeading } from "../typography/heading";
 import { WorkAccordion } from "./WorkAccordion";
@@ -22,21 +19,13 @@ export default function Work() {
       <SectionHeading id="work-heading">Work Experience</SectionHeading>
       <p className="text-sm font-light">
         Prefer a one-pager?{" "}
-        <Link
-          href="/resume"
-          className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
-        >
-          Read the résumé
-        </Link>{" "}
-        or{" "}
         <a
           href={RESUME.href}
           download={RESUME.download}
           className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
-          download the PDF
-        </a>{" "}
-        (updated {monthLabel(resume.updated)}).
+          Download the résumé (PDF)
+        </a>
       </p>
       {/* Both layouts are in the HTML; CSS shows the one that fits. */}
       <WorkAccordion companies={work} className="md:hidden" />
