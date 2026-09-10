@@ -88,6 +88,22 @@ test("embeds Person structured data derived from the content", async ({ page }) 
   );
 });
 
+test("the résumé page shows the same roles as the PDF", async ({ page }) => {
+  const errors = watchErrors(page);
+  // The export writes /resume as resume.html; Vercel resolves the clean URL.
+  await page.goto("/resume.html", { waitUntil: "networkidle" });
+  await expect(page).toHaveTitle(/Résumé/);
+  const work = page.getByRole("region", { name: "Work Experience" });
+  for (const company of ["Anthropic", "OpenSea", "Amazon"]) {
+    await expect(work.getByRole("heading", { name: new RegExp(company) }).first()).toBeVisible();
+  }
+  // The internships are left off the résumé (resume: false in work.ts).
+  await expect(work.getByText("Nielsen")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Education" }).getByText("University of Florida")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download PDF" })).toHaveAttribute("href", "/MichaelCohenResume.pdf");
+  expect(errors.pageErrors).toEqual([]);
+});
+
 test("serves the résumé PDF generated from the content files", async ({ request }) => {
   const response = await request.get("/MichaelCohenResume.pdf");
   expect(response.status()).toBe(200);
@@ -115,6 +131,7 @@ test("serves the crawler and sharing files", async ({ request }) => {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
   }
+  expect(await (await request.get("/sitemap.xml")).text()).toContain("/resume</loc>");
 });
 
 test("loads the Vercel scripts on the apex and nowhere else", async ({ page, baseURL }) => {
