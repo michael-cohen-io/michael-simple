@@ -2,7 +2,7 @@
 // content the page is rendered from:
 //
 //   public/index.md     the home page as Markdown (served for `/` when a request
-//                       asks for `Accept: text/markdown`, by a 307 redirect; see vercel.json)
+//                       prefers `text/markdown`, by the rewrite in middleware.ts)
 //   public/llms.txt     the llms.txt index (https://llmstxt.org): who this is,
 //                       when to use the site, and where each thing lives
 //   public/openapi.json an OpenAPI 3.1 description of the site's read-only
@@ -94,10 +94,40 @@ const llms = [
 // descriptions gets typed operations (operationId, description, response
 // media types) for the résumé, the Markdown page and the llms.txt index
 // instead of scraping the HTML for their URLs.
+// The 404 is negotiated by the middleware (middleware.ts): a problem document
+// for JSON clients, Markdown for everyone else who is not a browser.
 const notFound = {
   description:
-    "No resource at this path. The body is the site's HTML 404 page; it links the home page, the résumé PDF, sitemap.xml and llms.txt.",
-  content: { "text/html": { schema: { type: "string" } } },
+    "No resource at this path. The body follows the Accept header: an RFC 9457 problem document for `application/json` or `application/problem+json`, the site's HTML 404 page for `text/html`, and otherwise (including `*/*` and no Accept header) a short Markdown note. Every variant links the home page, the Markdown page, llms.txt, this document, the résumé PDF and the sitemap.",
+  headers: { Vary: { schema: { type: "string", enum: ["Accept"] } } },
+  content: {
+    "text/markdown": { schema: { type: "string" } },
+    "application/problem+json": { schema: { $ref: "#/components/schemas/Problem" } },
+    "text/html": { schema: { type: "string" } },
+  },
+};
+
+const problemSchema = {
+  type: "object",
+  description: "RFC 9457 problem details, with a stable `code` and a `hint` saying where to look instead.",
+  required: ["type", "title", "status", "detail", "instance", "code", "hint", "resources"],
+  properties: {
+    type: { type: "string", format: "uri", description: "Always `about:blank`: the status code says it all.", enum: ["about:blank"] },
+    title: { type: "string", enum: ["Not Found"] },
+    status: { type: "integer", enum: [404] },
+    detail: { type: "string", description: "What was asked for and where the resources are listed." },
+    instance: { type: "string", description: "The path that was requested." },
+    code: { type: "string", description: "Machine-readable error code.", enum: ["not_found"] },
+    hint: { type: "string", description: "How to recover." },
+    resources: {
+      type: "object",
+      description: "Absolute URLs of every resource on the site.",
+      required: ["home", "markdown", "llms", "openapi", "resume", "sitemap"],
+      properties: Object.fromEntries(
+        ["home", "markdown", "llms", "openapi", "resume", "sitemap"].map((key) => [key, { type: "string", format: "uri" }]),
+      ),
+    },
+  },
 };
 
 const operation = (
@@ -141,16 +171,14 @@ const openapi = {
     "/": operation(
       "getHome",
       "The home page",
-      "The one-page site: introduction, work history and contact details. Sending `Accept: text/markdown` answers with a 307 redirect to `/index.md`, the same content as Markdown; any other Accept value returns the HTML.",
+      "The one-page site: introduction, work history and contact details. A request that prefers `text/markdown` (acceptmarkdown.com) gets the same content as Markdown at this URL, no redirect; any other Accept value gets the HTML. The response carries `Vary: Accept`.",
       {
         "200": {
-          description: "The page as HTML (also carries `Vary: Accept`).",
-          content: { "text/html": { schema: { type: "string" } } },
-        },
-        "307": {
-          description: "Sent when the request accepts `text/markdown`: the Markdown version lives at `/index.md`.",
-          headers: {
-            Location: { description: "Always `/index.md`.", schema: { type: "string", enum: ["/index.md"] } },
+          description: "The page, as HTML or as Markdown depending on the Accept header.",
+          headers: { Vary: { schema: { type: "string", enum: ["Accept"] } } },
+          content: {
+            "text/html": { schema: { type: "string" } },
+            "text/markdown": { schema: { type: "string" } },
           },
         },
       },
@@ -191,12 +219,26 @@ const openapi = {
       {
         "200": {
           description: "This document.",
-          content: { "application/json": { schema: { type: "object" } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["openapi", "info", "servers", "paths"],
+                properties: {
+                  openapi: { type: "string", description: "The OpenAPI version, 3.1.x." },
+                  info: { type: "object" },
+                  servers: { type: "array", items: { type: "object" } },
+                  paths: { type: "object" },
+                  components: { type: "object" },
+                },
+              },
+            },
+          },
         },
       },
     ),
   },
-  components: { responses: { NotFound: notFound } },
+  components: { schemas: { Problem: problemSchema }, responses: { NotFound: notFound } },
 };
 for (const item of Object.values(openapi.paths)) Object.assign(item.get, { tags: ["site"] });
 
