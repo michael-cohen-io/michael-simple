@@ -54,6 +54,7 @@ export const KNOWN_PATHS: ReadonlySet<string> = new Set([
   "/index.md",
   "/llms.txt",
   "/openapi.json",
+  "/resume.json",
   RESUME.href,
   // Metadata routes in src/app.
   "/robots.txt",

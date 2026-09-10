@@ -178,6 +178,13 @@
     }
   }
 }
+/* On paper there is no scroll: the timeline is simply drawn. */
+@media print {
+  .timeline-line,
+  .timeline-dot {
+    animation: none;
+  }
+}
 @keyframes timeline-draw {
   from {
     transform: scaleY(0);

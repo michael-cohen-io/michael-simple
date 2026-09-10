@@ -15,6 +15,7 @@
 /public/index.md
 /public/llms.txt
 /public/openapi.json
+/public/resume.json
 
 # production
 /build

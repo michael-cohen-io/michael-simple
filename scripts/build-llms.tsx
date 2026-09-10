@@ -1,10 +1,12 @@
-// Writes the three files agents read instead of the HTML, from the same
+// Writes the four files agents read instead of the HTML, from the same
 // content the page is rendered from:
 //
 //   public/index.md     the home page as Markdown (served for `/` when a request
 //                       prefers `text/markdown`, by the rewrite in middleware.ts)
 //   public/llms.txt     the llms.txt index (https://llmstxt.org): who this is,
 //                       when to use the site, and where each thing lives
+//   public/resume.json  the résumé in the JSON Resume schema (jsonresume.org),
+//                       the same work history as typed JSON
 //   public/openapi.json an OpenAPI 3.1 description of the site's read-only
 //                       resources (the files above, the PDF, the sitemap), so a
 //                       tool-using agent can fetch them without guessing URLs
@@ -18,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
+import { writing } from "@/content/writing";
 import { CONTACT_EMAIL, PROFILES, RESUME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { companyViews } from "@/lib/work";
 
@@ -36,6 +39,10 @@ const markdown = [
   `- Email: ${CONTACT_EMAIL}`,
   ...PROFILES.map((profile) => `- ${profile.name}: ${profile.url}`),
   `- Résumé (one-page PDF): ${resumeUrl}`,
+  "",
+  "## Writing & Talks",
+  "",
+  ...writing.map((piece) => `- [${piece.title}](${piece.url}) (${piece.venue}): ${piece.summary}`),
   "",
   "## Work Experience",
   "",
@@ -65,7 +72,7 @@ const llms = [
   "",
   `> ${SITE_DESCRIPTION}`,
   "",
-  "The site is one page: a short introduction, a dated work history, and ways to get in touch. All of it is available as Markdown: request `/` with `Accept: text/markdown`, or fetch `/index.md` directly.",
+  "The site is one page: a short introduction, a list of writing and talks, a dated work history, and ways to get in touch. All of it is available as Markdown: request `/` with `Accept: text/markdown`, or fetch `/index.md` directly; the work history is also typed JSON at `/resume.json`.",
   "",
   "## When to use this site",
   "",
@@ -80,7 +87,12 @@ const llms = [
   `- [Home as Markdown](${SITE_URL}/index.md): the same content as text, for agents`,
   `- [Résumé (PDF)](${resumeUrl}): one page, generated from the same content`,
   `- [Sitemap](${SITE_URL}/sitemap.xml): every indexable URL`,
+  `- [Résumé as JSON](${SITE_URL}/resume.json): the work history, education and skills in the JSON Resume schema (jsonresume.org)`,
   `- [OpenAPI description](${SITE_URL}/openapi.json): the resources above as an OpenAPI 3.1 document, for tool-using agents (read-only, no authentication)`,
+  "",
+  "## Writing",
+  "",
+  ...writing.map((piece) => `- [${piece.title}](${piece.url}): ${piece.summary}`),
   "",
   "## Profiles",
   "",
@@ -152,6 +164,149 @@ const textResponse = (description: string, mediaType: string) => ({
   },
 });
 
+/** Markdown bullets as plain text: links keep their words, emphasis its text. */
+const plain = (markdown: string) =>
+  markdown
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(\*|_)(.+?)\1/g, "$2");
+
+// The résumé in the JSON Resume schema (https://jsonresume.org/schema):
+// the same work history as the page, every role its own entry, bullets as
+// plain-text highlights, the profiles from lib/site.ts, and the writing as
+// publications. Dates are YYYY-MM, which the schema allows.
+const current = work.find((company) => company.endIso === null)?.entries[0];
+const resumeJson = {
+  $schema: "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  basics: {
+    name: SITE_NAME,
+    label: current ? `${current.role}, ${work[0].name}` : undefined,
+    image: `${SITE_URL}/portrait.jpg`,
+    email: CONTACT_EMAIL,
+    url: `${SITE_URL}/`,
+    summary: SITE_DESCRIPTION,
+    location: { city: "Brooklyn", region: "NY", countryCode: "US" },
+    profiles: PROFILES.map((profile) => ({
+      network: profile.name,
+      username: profile.handle.replace(/^[@/]/, ""),
+      url: profile.url,
+    })),
+  },
+  work: work.flatMap((company) =>
+    company.entries.map((entry) => ({
+      name: company.name,
+      position: entry.role,
+      ...(company.url && { url: company.url }),
+      startDate: entry.startIso,
+      ...(entry.endIso && { endDate: entry.endIso }),
+      summary: entry.team,
+      highlights: entry.bullets.map(plain),
+    })),
+  ),
+  education: resume.education.map((item) => {
+    const [studyType, ...area] = item.degree.split(" in ");
+    return {
+      institution: item.school,
+      studyType,
+      area: area.join(" in "),
+      endDate: item.graduated,
+    };
+  }),
+  skills: resume.skills.map((group) => ({ name: group.label, keywords: group.items })),
+  publications: writing.map((piece) => ({
+    name: piece.title,
+    publisher: piece.venue,
+    url: piece.url,
+    summary: piece.summary,
+  })),
+  meta: { canonical: `${SITE_URL}/resume.json`, version: "v1.0.0" },
+};
+
+const resumeJsonSchema = {
+  type: "object",
+  description: "A JSON Resume document (https://jsonresume.org/schema).",
+  required: ["basics", "work", "education", "skills"],
+  properties: {
+    $schema: { type: "string", format: "uri" },
+    basics: {
+      type: "object",
+      required: ["name", "email", "url", "summary", "location", "profiles"],
+      properties: {
+        name: { type: "string" },
+        label: { type: "string", description: "Current title and employer." },
+        image: { type: "string", format: "uri" },
+        email: { type: "string", format: "email" },
+        url: { type: "string", format: "uri" },
+        summary: { type: "string" },
+        location: {
+          type: "object",
+          properties: { city: { type: "string" }, region: { type: "string" }, countryCode: { type: "string" } },
+        },
+        profiles: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["network", "username", "url"],
+            properties: { network: { type: "string" }, username: { type: "string" }, url: { type: "string", format: "uri" } },
+          },
+        },
+      },
+    },
+    work: {
+      type: "array",
+      description: "One entry per role, newest first.",
+      items: {
+        type: "object",
+        required: ["name", "position", "startDate", "summary", "highlights"],
+        properties: {
+          name: { type: "string", description: "Employer." },
+          position: { type: "string" },
+          url: { type: "string", format: "uri" },
+          startDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}$" },
+          endDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}$", description: "Absent while the role is ongoing." },
+          summary: { type: "string", description: "The team." },
+          highlights: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+    education: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["institution", "studyType", "area", "endDate"],
+        properties: {
+          institution: { type: "string" },
+          studyType: { type: "string" },
+          area: { type: "string" },
+          endDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}$" },
+        },
+      },
+    },
+    skills: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["name", "keywords"],
+        properties: { name: { type: "string" }, keywords: { type: "array", items: { type: "string" } } },
+      },
+    },
+    publications: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["name", "publisher", "url", "summary"],
+        properties: {
+          name: { type: "string" },
+          publisher: { type: "string" },
+          url: { type: "string", format: "uri" },
+          summary: { type: "string" },
+        },
+      },
+    },
+    meta: { type: "object", properties: { canonical: { type: "string", format: "uri" }, version: { type: "string" } } },
+  },
+};
+
 const openapi = {
   openapi: "3.1.0",
   info: {
@@ -213,6 +368,17 @@ const openapi = {
       "Every indexable URL on the site (there is one) in the sitemaps.org format.",
       textResponse("The sitemap.", "application/xml"),
     ),
+    "/resume.json": operation(
+      "getResumeJson",
+      "The résumé as JSON Resume",
+      "The work history, education, skills, profiles and writing in the JSON Resume schema (https://jsonresume.org/schema), generated from the same content as the page. The typed counterpart of /index.md and the PDF.",
+      {
+        "200": {
+          description: "The résumé.",
+          content: { "application/json": { schema: { $ref: "#/components/schemas/JsonResume" } } },
+        },
+      },
+    ),
     "/openapi.json": operation(
       "getOpenApi",
       "This document",
@@ -239,7 +405,10 @@ const openapi = {
       },
     ),
   },
-  components: { schemas: { Problem: problemSchema }, responses: { NotFound: notFound } },
+  components: {
+    schemas: { Problem: problemSchema, JsonResume: resumeJsonSchema },
+    responses: { NotFound: notFound },
+  },
 };
 for (const item of Object.values(openapi.paths)) Object.assign(item.get, { tags: ["site"] });
 
@@ -247,7 +416,8 @@ const openapiJson = `${JSON.stringify(openapi, null, 2)}\n`;
 
 await writeFile(path.join(publicDir, "index.md"), markdown);
 await writeFile(path.join(publicDir, "llms.txt"), llms);
+await writeFile(path.join(publicDir, "resume.json"), `${JSON.stringify(resumeJson, null, 2)}\n`);
 await writeFile(path.join(publicDir, "openapi.json"), openapiJson);
 console.log(
-  `wrote public/index.md (${Buffer.byteLength(markdown)} B, ${work.length} companies), public/llms.txt (${Buffer.byteLength(llms)} B) and public/openapi.json (${Object.keys(openapi.paths).length} paths)`,
+  `wrote public/index.md (${Buffer.byteLength(markdown)} B, ${work.length} companies), public/llms.txt (${Buffer.byteLength(llms)} B), public/resume.json (${resumeJson.work.length} roles) and public/openapi.json (${Object.keys(openapi.paths).length} paths)`,
 );

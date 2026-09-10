@@ -92,16 +92,19 @@ test("puts the dates in their own column beside the timeline on a desktop", asyn
   expect(Math.abs(date!.y + date!.height / 2 - (name!.y + name!.height / 2))).toBeLessThan(8);
   // The spine draws on the scroll timeline (Chromium supports it; reduced
   // motion is off in this browser).
-  const spine = await page.evaluate(() => {
+  const spine = await page.evaluate(async () => {
     const line = document.querySelector(".timeline-line") as HTMLElement;
     const dot = document.querySelector(".timeline-dot") as HTMLElement;
     // animation-timeline is not in the DOM typings yet.
     const timeline = (el: HTMLElement) => getComputedStyle(el).getPropertyValue("animation-timeline");
+    // Scroll the first dot to the middle of the screen, past the range in
+    // which its line draws, and read the line's transform there.
+    document.querySelector(".timeline-dot-box")!.scrollIntoView({ block: "center" });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     return { line: timeline(line), dot: timeline(dot), drawn: getComputedStyle(line).transform };
   });
   expect(spine.line).toBe("--timeline-dot");
   expect(spine.dot).toBe("--timeline-dot");
-  // The first row is in view on load, so its line is already fully drawn.
   expect(spine.drawn === "none" || spine.drawn.startsWith("matrix(1, 0, 0, 1")).toBe(true);
   // Closed rows still open, and the first is open already.
   await expect(work.getByRole("button", { name: /Anthropic/ })).toHaveAttribute("aria-expanded", "true");
@@ -386,7 +389,7 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
   // Every resource it lists exists, and every operation is self-describing.
   const paths = Object.keys(spec.paths);
   expect(paths).toEqual(
-    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/openapi.json"]),
+    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/resume.json", "/openapi.json"]),
   );
   const ids = new Set<string>();
   for (const [route, item] of Object.entries(spec.paths)) {
@@ -406,6 +409,63 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
   await expect(agents).toBeVisible();
   await expect(agents).toHaveAttribute("href", "/llms.txt");
   await expect(page.locator("footer").getByText("openapi.json")).toHaveCount(0);
+});
+
+test("lists writing and talks under the hero, from the content file", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const section = page.getByRole("region", { name: "Writing & Talks" });
+  await expect(section).toBeVisible();
+  const links = section.getByRole("link");
+  expect(await links.count()).toBeGreaterThanOrEqual(3);
+  for (const link of await links.all()) {
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("href", /^https:\/\//);
+  }
+  await expect(section.getByRole("link", { name: /Decoupling the brain from the hands/ })).toBeVisible();
+  // Talks carry a play mark; articles do not.
+  expect(await section.locator("li svg").count()).toBeGreaterThanOrEqual(1);
+  // The section sits between the hero and the work history.
+  const hero = await page.locator("main p").first().boundingBox();
+  const writing = await section.boundingBox();
+  const work = await page.getByRole("region", { name: "Work Experience" }).boundingBox();
+  expect(writing!.y).toBeGreaterThan(hero!.y);
+  expect(work!.y).toBeGreaterThan(writing!.y);
+  // Connect rows carry a glyph each.
+  expect(await page.getByRole("region", { name: "Connect" }).locator("li svg").count()).toBe(4);
+});
+
+test("serves the résumé as a JSON Resume document", async ({ request }) => {
+  const response = await request.get("/resume.json");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("json");
+  const resume = (await response.json()) as {
+    $schema: string;
+    basics: { name: string; email: string; profiles: { network: string; url: string }[] };
+    work: { name: string; position: string; startDate: string; endDate?: string; highlights: string[] }[];
+    education: { institution: string; endDate: string }[];
+    skills: { name: string; keywords: string[] }[];
+    publications: { name: string; url: string }[];
+  };
+  expect(resume.$schema).toContain("jsonresume");
+  expect(resume.basics.name).toBe("Michael Cohen");
+  expect(resume.basics.email).toBe("hello@michaelcohen.io");
+  expect(resume.basics.profiles.map((p) => p.network)).toEqual(["GitHub", "LinkedIn", "X"]);
+  expect(resume.work[0]).toMatchObject({ name: "Anthropic", position: "Member of Technical Staff", startDate: "2024-08" });
+  expect(resume.work[0].endDate).toBeUndefined();
+  expect(resume.work.length).toBeGreaterThanOrEqual(5);
+  for (const role of resume.work) {
+    expect(role.startDate).toMatch(/^\d{4}-\d{2}$/);
+    for (const highlight of role.highlights) expect(highlight).not.toMatch(/\]\(|\*|_/);
+  }
+  expect(resume.education[0]).toMatchObject({ institution: "University of Florida", endDate: "2017-12" });
+  expect(resume.skills.length).toBeGreaterThan(0);
+  expect(resume.publications.map((p) => p.url)).toContain("https://www.anthropic.com/engineering/managed-agents");
+
+  // Listed where agents look for it.
+  expect(await (await request.get("/llms.txt")).text()).toContain("https://www.michaelcohen.io/resume.json");
+  expect(await (await request.get("/index.md")).text()).toContain("## Writing & Talks");
+  const spec = (await (await request.get("/openapi.json")).json()) as { paths: Record<string, unknown> };
+  expect(Object.keys(spec.paths)).toContain("/resume.json");
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {
