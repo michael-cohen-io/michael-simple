@@ -8,7 +8,7 @@ import { ErrorBeacon } from "@/components/analytics/error-beacon";
 import { OnVercel } from "@/components/analytics/on-vercel";
 import Footer from "@/components/footer";
 import Header from "@/components/header/header";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, X_HANDLE } from "@/lib/site";
 
 // One variable face instead of seven static weights: a single @font-face
 // pair per subset, and Tailwind's font-sans reads it through the variable.
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    creator: "@pwincessmichael",
+    creator: X_HANDLE,
   },
   robots: { index: true, follow: true },
 };

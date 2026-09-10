@@ -60,6 +60,19 @@ test("has one h1 and alt text on every image", async ({ page }) => {
   await expect(page.locator("img:not([alt])")).toHaveCount(0);
 });
 
+test("links every profile from Connect and names X in the card metadata", async ({ page }) => {
+  await page.goto("/");
+  const connect = page.getByRole("region", { name: "Connect" });
+  for (const url of [
+    "https://github.com/michael-cohen-io",
+    "https://www.linkedin.com/in/michael-cohen1995/",
+    "https://x.com/_hi_mc",
+  ]) {
+    await expect(connect.locator(`a[href="${url}"]`), url).toHaveCount(1);
+  }
+  await expect(page.locator('meta[name="twitter:creator"]')).toHaveAttribute("content", "@_hi_mc");
+});
+
 test("serves the résumé PDF generated from the content files", async ({ request }) => {
   const response = await request.get("/MichaelCohenResume.pdf");
   expect(response.status()).toBe(200);

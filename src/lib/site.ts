@@ -11,11 +11,24 @@ export const SITE_NAME = "Michael Cohen";
 export const SITE_TITLE = "Michael Cohen — Software Engineer at Anthropic";
 
 export const SITE_DESCRIPTION =
-  "Michael Cohen is a software engineer on Anthropic's API team in Brooklyn, NY. Previously OpenSea and Amazon.";
+  "Michael Cohen is a software engineer on Anthropic's Agentic Systems team in Brooklyn, NY, building Claude Managed Agents. Previously OpenSea and Amazon.";
 
 export const CONTACT_EMAIL = "micohen13@gmail.com";
 
 export const SOURCE_URL = "https://github.com/michael-cohen-io/michael-simple";
+
+/**
+ * Profiles elsewhere, in the order the Connect section lists them. The same
+ * URLs are the `sameAs` links in the page's structured data, and the X handle
+ * is the card creator in the Twitter metadata.
+ */
+export const PROFILES = [
+  { name: "GitHub", handle: "@michael-cohen-io", url: "https://github.com/michael-cohen-io" },
+  { name: "LinkedIn", handle: "/michael-cohen1995", url: "https://www.linkedin.com/in/michael-cohen1995/" },
+  { name: "X", handle: "@_hi_mc", url: "https://x.com/_hi_mc" },
+] as const;
+
+export const X_HANDLE = PROFILES[2].handle;
 
 /**
  * The résumé PDF: where it lives and what it saves as. It is generated from
