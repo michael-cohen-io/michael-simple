@@ -22,7 +22,7 @@ export default function Work() {
         <a
           href={RESUME.href}
           download={RESUME.download}
-          className="underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
+          className="py-2 underline underline-offset-4 decoration-primary/60 hover:decoration-primary"
         >
           Download the résumé (PDF)
         </a>

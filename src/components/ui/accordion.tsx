@@ -45,20 +45,42 @@ const AccordionTrigger = React.forwardRef<
 ));
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
+// True once any panel has rendered on the client. A panel that is already
+// open in the server HTML must not run the open animation on first paint:
+// it would grow from height 0 and shift everything below it (0.18 CLS on
+// phones). Panels that mount later, when the visitor opens one, do animate.
+// useState's initialiser runs once per panel, so the server-rendered panel
+// keeps `false` for its lifetime.
+let hydrated = false;
+function useAnimateOpen() {
+  const [animate] = React.useState(() => hydrated);
+  React.useEffect(() => {
+    hydrated = true;
+  }, []);
+  return animate;
+}
+
 // The open/close animation only runs when the visitor has not asked for
 // reduced motion; the panel then just appears.
 const AccordionContent = React.forwardRef<
   React.ComponentRef<typeof AccordionPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Content
-    ref={ref}
-    className="overflow-hidden text-sm motion-safe:data-[state=closed]:animate-accordion-up motion-safe:data-[state=open]:animate-accordion-down"
-    {...props}
-  >
-    <div className={cn("pb-4 pt-0", className)}>{children}</div>
-  </AccordionPrimitive.Content>
-));
+>(({ className, children, ...props }, ref) => {
+  const animate = useAnimateOpen();
+  return (
+    <AccordionPrimitive.Content
+      ref={ref}
+      className={cn(
+        "overflow-hidden text-sm",
+        animate &&
+          "motion-safe:data-[state=closed]:animate-accordion-up motion-safe:data-[state=open]:animate-accordion-down",
+      )}
+      {...props}
+    >
+      <div className={cn("pb-4 pt-0", className)}>{children}</div>
+    </AccordionPrimitive.Content>
+  );
+});
 
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 

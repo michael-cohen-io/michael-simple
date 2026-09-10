@@ -94,6 +94,39 @@ test.describe("on a phone", () => {
     expect(Math.round(theme!.x + theme!.width)).toBeLessThanOrEqual(Math.round(main!.x + main!.width));
   });
 
+  test("nothing shifts after the first paint", async ({ page }) => {
+    // Cumulative layout shift, as Lighthouse counts it: every layout-shift
+    // entry not caused by input. The open accordion panel once animated from
+    // height 0 on load and scored 0.18 here; the budget is a tenth of that.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries() as (PerformanceEntry & { hadRecentInput?: boolean; value?: number })[]) {
+          if (!entry.hadRecentInput) w.__cls += entry.value ?? 0;
+        }
+      }).observe({ type: "layout-shift", buffered: true });
+    });
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1000);
+    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    expect(cls).toBeLessThan(0.02);
+  });
+
+  test("every link and button is at least 24px tall", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const small = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("a, button"))
+        .map((el) => ({ text: (el.textContent ?? "").trim().slice(0, 40), box: el.getBoundingClientRect() }))
+        // Hidden controls (the desktop timeline at this width) are 0×0; the
+        // skip link is 1×1 until focused, by design.
+        .filter(({ box }) => box.width > 0 && box.height > 0)
+        .filter(({ text, box }) => text !== "Skip to content" && (box.width < 24 || box.height < 24))
+        .map(({ text, box }) => `${text} ${Math.round(box.width)}×${Math.round(box.height)}`),
+    );
+    expect(small).toEqual([]);
+  });
+
   test("the first company is open and a second can open beside it", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
     const work = page.getByRole("region", { name: "Work Experience" });
@@ -186,6 +219,7 @@ test("the 404 page is in the site's chrome with a way back", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Back to the home page" })).toHaveAttribute("href", "/");
   await expect(page.getByRole("link", { name: "Michael Cohen, home" })).toBeVisible();
   await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
+  await expect(page.locator("main img").first()).toHaveAttribute("src", /memoji\.webp$/);
   expect(errors.pageErrors).toEqual([]);
 });
 
