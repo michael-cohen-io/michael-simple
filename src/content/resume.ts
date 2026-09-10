@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "@/lib/site";
+
 /**
  * Everything on the résumé PDF that is not the work history. The history
  * itself comes from ./work.ts, curated by the `resume` fields there, so the
@@ -19,7 +21,7 @@ export type Resume = {
 export const resume: Resume = {
   name: "Michael Cohen",
   location: "New York, NY",
-  email: "micohen13@gmail.com",
+  email: CONTACT_EMAIL,
   site: "https://michaelcohen.io",
   education: [
     {
