@@ -28,7 +28,7 @@ const TimelineTime = React.forwardRef<
   <p
     ref={ref}
     className={cn(
-      "absolute -left-32 text-sm font-semibold leading-none text-muted-foreground hidden md:block hover:text-primary",
+      "block lg:absolute lg:-left-32 text-sm font-semibold leading-none text-muted-foreground hover:text-primary",
       className,
     )}
     {...props}
