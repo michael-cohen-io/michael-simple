@@ -73,6 +73,21 @@ test("links every profile from Connect and names X in the card metadata", async 
   await expect(page.locator('meta[name="twitter:creator"]')).toHaveAttribute("content", "@_hi_mc");
 });
 
+test("embeds Person structured data derived from the content", async ({ page }) => {
+  await page.goto("/");
+  const raw = await page.locator('script[type="application/ld+json"]').first().textContent();
+  const data = JSON.parse(raw ?? "null");
+  expect(data["@type"]).toBe("ProfilePage");
+  const person = data.mainEntity;
+  expect(person["@type"]).toBe("Person");
+  expect(person.name).toBe("Michael Cohen");
+  expect(person.worksFor.name).toBe("Anthropic");
+  expect(person.jobTitle).toBe("Member of Technical Staff");
+  expect(person.sameAs).toEqual(
+    expect.arrayContaining(["https://github.com/michael-cohen-io", "https://x.com/_hi_mc"]),
+  );
+});
+
 test("serves the résumé PDF generated from the content files", async ({ request }) => {
   const response = await request.get("/MichaelCohenResume.pdf");
   expect(response.status()).toBe(200);
