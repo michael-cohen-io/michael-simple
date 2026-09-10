@@ -25,6 +25,25 @@ export const config = {
   matcher: ["/((?!_next/).*)"],
 };
 
+/**
+ * Next's own files in the export: the RSC payloads (`/__next.*.txt`) and the
+ * not-found route's files (`/_not-found*`). They are real files, and the only
+ * paths under a leading underscore that are; anything else starting with `_`
+ * is as unknown as any other path (a scanner's `/__probe` included).
+ */
+export function isNextInternal(pathname: string): boolean {
+  return pathname.startsWith("/__next.") || pathname.startsWith("/_not-found");
+}
+
+/**
+ * Paths that read as API calls. A client asking for one of these is a
+ * program, so an unknown one gets a problem document unless the request
+ * says it prefers HTML or Markdown.
+ */
+export function looksLikeApi(pathname: string): boolean {
+  return /^\/(api|graphql|v\d+)(\/|$)/.test(pathname);
+}
+
 export const KNOWN_PATHS: ReadonlySet<string> = new Set([
   // The page, its RSC payload and the 404 page.
   "/",
@@ -152,11 +171,26 @@ export default function middleware(request: Request): Response {
     return next();
   }
 
-  // Published files, and Next's own payload files (`/__next.*`, `/_not-found`
-  // and friends), are the filesystem's to answer.
-  if (KNOWN_PATHS.has(pathname) || pathname.startsWith("/_")) return next();
+  // Published files and Next's own payload files are the filesystem's to answer.
+  if (KNOWN_PATHS.has(pathname) || isNextInternal(pathname)) return next();
 
-  switch (preferred(accept, ["text/markdown", "application/problem+json", "text/html"])) {
+  const offers: readonly Offer[] = looksLikeApi(pathname)
+    ? ["application/problem+json", "text/markdown", "text/html"]
+    : ["text/markdown", "application/problem+json", "text/html"];
+  const variant = preferred(accept, offers);
+  // One line per miss, in the Vercel runtime logs: which paths agents and
+  // scanners try, what they accept, and what they were given.
+  console.log(
+    JSON.stringify({
+      event: "not_found",
+      method: request.method,
+      path: pathname,
+      accept,
+      userAgent: request.headers.get("user-agent"),
+      variant,
+    }),
+  );
+  switch (variant) {
     case "text/html":
       // Vercel serves out/404.html with a 404 status.
       return next();
