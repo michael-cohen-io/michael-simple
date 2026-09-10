@@ -281,10 +281,15 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
   }
   expect(ids.size).toBe(paths.length);
 
-  // The home page points at the document and at its Markdown twin.
+  // The home page points at the document and at its Markdown twin, and the
+  // footer shows people (and agents reading the page) where llms.txt is.
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator('link[rel="service-desc"][href="/openapi.json"]')).toBeAttached();
   await expect(page.locator('link[rel="alternate"][type="text/markdown"][href$="/index.md"]')).toBeAttached();
+  const agents = page.locator("footer").getByRole("link", { name: "/llms.txt" });
+  await expect(agents).toBeVisible();
+  await expect(agents).toHaveAttribute("href", "/llms.txt");
+  await expect(page.locator("footer").getByText("openapi.json")).toHaveCount(0);
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {

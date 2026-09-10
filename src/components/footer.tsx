@@ -16,6 +16,17 @@ export default function Footer() {
         </a>{" "}
         (and Claude)
       </p>
+      {/* The one visible pointer for agents; llms.txt lists everything else
+          (the Markdown page, the OpenAPI document, the PDF). */}
+      <p className="mt-2 text-sm text-muted-foreground">
+        For agents:{" "}
+        <a
+          href="/llms.txt"
+          className="py-2 font-mono underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
+        >
+          /llms.txt
+        </a>
+      </p>
     </footer>
   );
 }
