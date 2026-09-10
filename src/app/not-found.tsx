@@ -37,11 +37,9 @@ export default function NotFound() {
         There&apos;s nothing at this address.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button asChild>
-          <Link href="/">Back to the home page</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/#work-heading">Work experience</Link>
+        <Button render={<Link href="/" />}>Back to the home page</Button>
+        <Button variant="outline" render={<Link href="/#work-heading" />}>
+          Work experience
         </Button>
       </div>
       {/* Where to look next, for people and for agents that land here. */}
