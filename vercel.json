@@ -3,19 +3,6 @@
   "devCommand": "bun run dev",
   "installCommand": "bun install --frozen-lockfile",
   "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": ".*text/markdown.*"
-        }
-      ],
-      "destination": "/index.md"
-    }
-  ],
   "headers": [
     {
       "source": "/",
@@ -247,6 +234,18 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": ".*text/markdown.*"
+        }
+      ],
+      "destination": "/index.md",
+      "permanent": false
+    },
     {
       "source": "/(.*)",
       "has": [

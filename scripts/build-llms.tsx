@@ -2,7 +2,7 @@
 // the page is rendered from:
 //
 //   public/index.md   the home page as Markdown (served for `/` when a request
-//                     asks for `Accept: text/markdown`; see vercel.json)
+//                     asks for `Accept: text/markdown`, by a 307 redirect; see vercel.json)
 //   public/llms.txt   the llms.txt index (https://llmstxt.org): who this is,
 //                     when to use the site, and where each thing lives
 //
