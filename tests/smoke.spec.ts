@@ -82,6 +82,19 @@ test("serves the résumé PDF generated from the content files", async ({ reques
   expect(body.length).toBeGreaterThan(20_000);
 });
 
+test("the 404 page is in the site's chrome with a way back", async ({ page }) => {
+  const errors = watchErrors(page);
+  // The static export writes the not-found page as 404.html; Vercel serves it
+  // for every unknown path.
+  await page.goto("/404.html", { waitUntil: "networkidle" });
+  await expect(page).toHaveTitle(/Page not found/);
+  await expect(page.getByText("nothing at this address")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to the home page" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Michael Cohen, home" })).toBeVisible();
+  await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
+  expect(errors.pageErrors).toEqual([]);
+});
+
 test("serves the crawler and sharing files", async ({ request }) => {
   for (const path of ["/robots.txt", "/sitemap.xml", "/opengraph-image"]) {
     const response = await request.get(path);

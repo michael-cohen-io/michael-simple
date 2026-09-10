@@ -60,7 +60,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={raleway.variable} suppressHydrationWarning>
-      <body className="font-sans">
+      {/* A column at least one screen tall, so the footer sits at the bottom
+          of short pages (the 404) instead of halfway up. */}
+      <body className="flex min-h-dvh flex-col font-sans">
         <Providers>
           {/* First in tab order; visible only while focused. */}
           <a

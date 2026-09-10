@@ -2,7 +2,7 @@ import { SOURCE_URL } from "@/lib/site";
 
 export default function Footer() {
   return (
-    <footer className="mt-16 w-full py-8 text-center">
+    <footer className="mt-auto w-full pt-16 pb-8 text-center">
       <p className="text-base text-muted-foreground">
         Built with <span aria-hidden="true">🤍</span> by{" "}
         <a
