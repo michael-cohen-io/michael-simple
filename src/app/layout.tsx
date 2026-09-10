@@ -28,7 +28,11 @@ export const metadata: Metadata = {
     template: `%s · ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: "/",
+    // The same page as Markdown, for agents that read link relations.
+    types: { "text/markdown": "/index.md" },
+  },
   openGraph: {
     type: "profile",
     url: "/",
@@ -63,6 +67,9 @@ export default function RootLayout({
       {/* A column at least one screen tall, so the footer sits at the bottom
           of short pages (the 404) instead of halfway up. */}
       <body className="flex min-h-dvh flex-col font-sans">
+        {/* RFC 8631 service description link to the OpenAPI document that
+            lists the site's fetchable resources; React hoists it into head. */}
+        <link rel="service-desc" type="application/json" href="/openapi.json" />
         <Providers>
           {/* First in tab order; visible only while focused. */}
           <a

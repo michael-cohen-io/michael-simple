@@ -14,6 +14,7 @@
 /public/MichaelCohenResume.pdf
 /public/index.md
 /public/llms.txt
+/public/openapi.json
 
 # production
 /build
