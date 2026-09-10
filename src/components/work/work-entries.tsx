@@ -35,7 +35,7 @@ export function CompanyName({
       href={company.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="underline-offset-4 hover:underline"
+      className="py-2 underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
     >
       {company.name}
       <NewTab />

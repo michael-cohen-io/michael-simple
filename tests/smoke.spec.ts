@@ -43,6 +43,22 @@ test.describe("without JavaScript on a phone", () => {
   });
 });
 
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("the first company is open and a second can open beside it", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const work = page.getByRole("region", { name: "Work Experience" });
+    const anthropic = work.getByRole("button", { name: /Anthropic/ });
+    const opensea = work.getByRole("button", { name: /OpenSea/ });
+    await expect(anthropic).toHaveAttribute("aria-expanded", "true");
+    await expect(opensea).toHaveAttribute("aria-expanded", "false");
+    await opensea.click();
+    await expect(opensea).toHaveAttribute("aria-expanded", "true");
+    await expect(anthropic).toHaveAttribute("aria-expanded", "true");
+  });
+});
+
 test.describe("in a timezone west of UTC", () => {
   test.use({ timezoneId: "America/New_York" });
 

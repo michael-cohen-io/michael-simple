@@ -1,6 +1,6 @@
 # michaelcohen.io
 
-One-page personal site: Next.js 16 (App Router, Turbopack, static export to `out/`), React 19, Tailwind CSS 4, a few shadcn/ui primitives, Raleway via `next/font`. Deployed on Vercel as static files.
+Personal site, two pages (`/` and `/resume`, plus the 404): Next.js 16 (App Router, Turbopack, static export to `out/`), React 19, Tailwind CSS 4, a few shadcn/ui primitives, Raleway via `next/font`. Deployed on Vercel as static files.
 
 ## Rules
 

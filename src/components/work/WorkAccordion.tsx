@@ -14,9 +14,10 @@ import {
 } from "./work-entries";
 
 /**
- * The narrow layout: one collapsible panel per company, at most one open at a
- * time and the most recent open by default. Everything inside is rendered on
- * the server; only the Radix accordion itself runs on the client.
+ * The narrow layout: one collapsible panel per company, the most recent open
+ * by default and any number open at once, so reading two companies does not
+ * mean closing one first. Everything inside is rendered on the server; only
+ * the Radix accordion itself runs on the client.
  */
 export function WorkAccordion({
   companies,
@@ -27,9 +28,8 @@ export function WorkAccordion({
 }) {
   return (
     <Accordion
-      type="single"
-      collapsible
-      defaultValue={companies[0]?.name}
+      type="multiple"
+      defaultValue={companies.slice(0, 1).map((company) => company.name)}
       className={className}
     >
       {companies.map((company) => (
