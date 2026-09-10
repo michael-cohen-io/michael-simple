@@ -238,6 +238,7 @@ test("serves llms.txt and the Markdown twin of the home page", async ({ request 
   expect(llmsText.startsWith("# Michael Cohen\n")).toBe(true);
   expect(llmsText).toContain("## When to use this site");
   expect(llmsText).toContain("https://www.michaelcohen.io/index.md");
+  expect(llmsText).toContain("https://www.michaelcohen.io/openapi.json");
 
   // Generated from the same content as the page, so the roles and their
   // links are the ones the timeline shows.
@@ -250,6 +251,40 @@ test("serves llms.txt and the Markdown twin of the home page", async ({ request 
   expect(mdText).toContain("[Claude Managed Agents](https://claude.com/blog/claude-managed-agents)");
   expect(mdText).toContain("hello@michaelcohen.io");
   expect(mdText).not.toContain("gmail");
+});
+
+test("describes its fetchable resources in an OpenAPI document", async ({ page, request }) => {
+  const response = await request.get("/openapi.json");
+  expect(response.status()).toBe(200);
+  const spec = (await response.json()) as {
+    openapi: string;
+    info: { title: string; contact?: { email?: string } };
+    servers: { url: string }[];
+    paths: Record<string, { get?: { operationId?: string; description?: string; tags?: string[] } }>;
+  };
+  expect(spec.openapi).toMatch(/^3\.1\./);
+  expect(spec.info.title).toContain("Michael Cohen");
+  expect(spec.info.contact?.email).toBe("hello@michaelcohen.io");
+  expect(spec.servers.map((server) => server.url)).toEqual(["https://www.michaelcohen.io"]);
+
+  // Every resource it lists exists, and every operation is self-describing.
+  const paths = Object.keys(spec.paths);
+  expect(paths).toEqual(
+    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/openapi.json"]),
+  );
+  const ids = new Set<string>();
+  for (const [route, item] of Object.entries(spec.paths)) {
+    expect(item.get?.operationId, route).toMatch(/^[a-zA-Z]+$/);
+    expect(item.get?.description?.length ?? 0, route).toBeGreaterThan(40);
+    ids.add(item.get?.operationId ?? "");
+    expect((await request.get(route)).status(), route).toBe(200);
+  }
+  expect(ids.size).toBe(paths.length);
+
+  // The home page points at the document and at its Markdown twin.
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator('link[rel="service-desc"][href="/openapi.json"]')).toBeAttached();
+  await expect(page.locator('link[rel="alternate"][type="text/markdown"][href$="/index.md"]')).toBeAttached();
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {
