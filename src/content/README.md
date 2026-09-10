@@ -8,3 +8,7 @@ company can carry a `resume` field: `false` leaves it off the PDF, a role's
 `{ role, bullets }` folds all its roles into one block. Everything else on
 the PDF (contact line, education, skills) is in `resume.ts`. The build fails
 if the PDF runs past one page.
+
+Writing and talks are `writing.ts`: one entry per piece with a title, URL,
+venue, one-line summary and a kind (`article`, `talk` or `video`). The list
+renders under the hero, into `index.md`, `llms.txt` and `resume.json`.

@@ -4,9 +4,10 @@ The source of [michaelcohen.io](https://michaelcohen.io), a one-page personal si
 
 ## Stack
 
-- [Next.js 16](https://nextjs.org/) (App Router, React 19, React Server Components, Turbopack) as a static export: `next build` writes the whole site to `out/`
-- [Tailwind CSS 4](https://tailwindcss.com/) (configured in [`src/app/globals.css`](./src/app/globals.css), no `tailwind.config`) and a few [shadcn/ui](https://ui.shadcn.com/) primitives (Radix accordion, separator, slot)
-- The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time
+- [Next.js 16](https://nextjs.org/) (App Router, React 19.3, React Server Components, Turbopack, the React Compiler) as a static export: `next build` writes the whole site to `out/`
+- [Tailwind CSS 4](https://tailwindcss.com/) (configured in [`src/app/globals.css`](./src/app/globals.css), no `tailwind.config`; an OKLCH palette of one pink) and a few [shadcn/ui](https://ui.shadcn.com/) primitives on [Base UI](https://base-ui.com/) (accordion, button, item, separator)
+- The work history is a typed TypeScript file, [`src/content/work.ts`](./src/content/work.ts), with Markdown bullets rendered by [react-markdown](https://github.com/remarkjs/react-markdown) at build time; writing and talks are [`src/content/writing.ts`](./src/content/writing.ts)
+- A human | agent switch in the header shows the page as an agent receives it: the Markdown twin and the llms.txt index
 - [Raleway](https://fonts.google.com/specimen/Raleway) self-hosted through `next/font`
 - [bun](https://bun.sh/) as the package manager and script runner; deployed on Vercel as static files, with the response headers and the `*.vercel.app` redirect in [`vercel.json`](./vercel.json), and one [Routing Middleware](https://vercel.com/docs/routing-middleware), [`middleware.ts`](./middleware.ts), that serves `/` as Markdown to clients that prefer it and gives unknown paths a 404 body agents can read (Markdown, or an RFC 9457 problem document for JSON clients)
 
@@ -28,7 +29,7 @@ The dev server listens on <http://localhost:3000>. There is no database and noth
 | `bun run lint` | Run ESLint (flat config in `eslint.config.mjs`; also covers `tests/` and `playwright.config.ts`) |
 | `bun run typecheck` | Run `tsc --noEmit` |
 | `bun run test:e2e` | Run the Playwright smoke test against `out/` and the middleware tests (build first; `bunx playwright install chromium` once) |
-| `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md`, `public/llms.txt` and `public/openapi.json` from `src/content` (runs on its own before `dev` and `build`) |
+| `bun run generate` | Render `public/MichaelCohenResume.pdf`, `public/index.md`, `public/llms.txt`, `public/resume.json` and `public/openapi.json` from `src/content` (runs on its own before `dev` and `build`) |
 
 ## Résumé
 
