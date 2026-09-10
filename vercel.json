@@ -187,14 +187,14 @@
   ],
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [
         {
           "type": "host",
           "value": "^michael-website(-my-team-ab1503ca)?\\.vercel\\.app$"
         }
       ],
-      "destination": "https://www.michaelcohen.io/:path*",
+      "destination": "https://www.michaelcohen.io/$1",
       "permanent": true
     }
   ]
