@@ -13,7 +13,8 @@ export default function Footer() {
           className="py-2 font-semibold text-primary underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
         >
           Michael Cohen
-        </a>
+        </a>{" "}
+        (and Claude)
       </p>
     </footer>
   );
