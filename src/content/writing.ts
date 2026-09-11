@@ -26,17 +26,17 @@ export const writing: Piece[] = [
     kind: "talk",
   },
   {
-    title: "New in Claude Managed Agents: outcomes, multiagent orchestration, dreaming and webhooks",
-    url: "https://claude.com/blog/new-in-claude-managed-agents",
-    venue: "Claude blog",
-    date: "2026-05",
-    kind: "article",
-  },
-  {
     title: "Scaling Managed Agents: Decoupling the brain from the hands",
     url: "https://www.anthropic.com/engineering/managed-agents",
     venue: "Anthropic Engineering",
     date: "2026-04",
     kind: "article",
+  },
+  {
+    title: "Building with MCP and the Claude API",
+    url: "https://www.youtube.com/watch?v=aZLr962R6Ag",
+    venue: "Anthropic on YouTube",
+    date: "2025-10",
+    kind: "video",
   },
 ];

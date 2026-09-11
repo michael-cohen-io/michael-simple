@@ -435,6 +435,12 @@ test("lists writing and talks under the hero, from the content file", async ({ p
   const months = await section.locator("li time").evaluateAll((els) => els.map((el) => el.getAttribute("datetime")));
   expect([...months].sort().reverse()).toEqual(months);
   await expect(section.locator("li svg title").first()).toHaveText(/Talk|Video/);
+  await expect(section.getByRole("link", { name: /Building with MCP and the Claude API/ })).toHaveAttribute(
+    "href",
+    "https://www.youtube.com/watch?v=aZLr962R6Ag",
+  );
+  await expect(section.locator("li").last()).toContainText("Anthropic on YouTube · Oct 2025");
+  await expect(section.locator("li").last().locator("svg title")).toHaveText("Video");
   expect(await section.locator("li svg title", { hasText: /Talk|Video/ }).count()).toBeGreaterThanOrEqual(1);
   // The section sits between the work history and Connect.
   const writing = await section.boundingBox();
