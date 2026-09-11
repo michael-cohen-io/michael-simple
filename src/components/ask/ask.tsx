@@ -15,6 +15,7 @@ const EXAMPLES = [
   "What did you build at Anthropic?",
   "What is the brain / hands split?",
   "What did you work on at OpenSea?",
+  "Which brands did you launch NFT drops with?",
 ];
 
 /**
@@ -92,10 +93,31 @@ export default function Ask() {
           {state.kind === "asking" ? "Asking…" : "Ask"}
         </button>
       </form>
-      {state.kind === "idle" && (
+      {state.kind === "asking" && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Asking the agent…
+        </p>
+      )}
+      {state.kind === "answered" && (
+        <div className="flex flex-col gap-2 rounded-lg bg-muted p-4 text-sm" role="status">
+          <p className="font-medium text-muted-foreground">{state.question}</p>
+          <p className="whitespace-pre-wrap">{state.answer.answer}</p>
+          <p className="text-xs text-muted-foreground">
+            {state.answer.backend === "agent" ? "Powered by Claude Managed Agents." : "Powered by Claude."}
+          </p>
+        </div>
+      )}
+      {state.kind === "failed" && (
+        <p className="text-sm text-muted-foreground" role="alert">
+          {state.message}
+        </p>
+      )}
+      {/* The suggestions stay under the answer, so a thread can keep going
+          with one click; the one just asked steps aside. */}
+      {state.kind !== "asking" && (
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>Try:</span>
-          {EXAMPLES.map((example) => (
+          <span>{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
+          {EXAMPLES.filter((example) => state.kind === "idle" || example !== state.question).map((example) => (
             <button
               key={example}
               type="button"
@@ -108,27 +130,6 @@ export default function Ask() {
               {example}
             </button>
           ))}
-        </p>
-      )}
-      {state.kind === "asking" && (
-        <p className="text-sm text-muted-foreground" role="status">
-          Asking the agent…
-        </p>
-      )}
-      {state.kind === "answered" && (
-        <div className="flex flex-col gap-2 rounded-lg bg-muted p-4 text-sm" role="status">
-          <p className="font-medium text-muted-foreground">{state.question}</p>
-          <p className="whitespace-pre-wrap">{state.answer.answer}</p>
-          <p className="text-xs text-muted-foreground">
-            {state.answer.backend === "agent"
-              ? "Answered by a Claude agent on Claude Managed Agents, grounded on this page. Ask a follow-up; it keeps the thread."
-              : "Answered by Claude, grounded on this page."}
-          </p>
-        </div>
-      )}
-      {state.kind === "failed" && (
-        <p className="text-sm text-muted-foreground" role="alert">
-          {state.message}
         </p>
       )}
     </section>

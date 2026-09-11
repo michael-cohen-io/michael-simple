@@ -38,14 +38,14 @@ The PDF behind "Download resume" is generated, not kept in the repo. [`scripts/b
 
 ## Ask about my work
 
-The question box is the one piece of the site with a server: `api/ask.ts`, a Vercel Function. It reads the page's Markdown twin, sends it with the visitor's first question to a Claude Managed Agent, and returns the agent's answer; follow-ups reuse the session, so the agent keeps the thread. Until the agent exists it answers with a single Claude API call over the same text, so the box works with just an API key.
+The question box is the one piece of the site with a server: `api/ask.ts`, a Vercel Function. It reads the page's Markdown twin, sends it with the visitor's first question to a Claude Managed Agent, and returns the agent's answer; follow-ups reuse the session, so the agent keeps the thread. The agent also has web search and web fetch, allowed only the domains this page links to (the employers, the writing, the profiles), so it can read a linked post for a detail the page does not give; the environment's egress list is the same set, and both are derived from the content files by `scripts/ask-setup.ts`, so a new link needs `bun scripts/ask-setup.ts update`. Until the agent exists it answers with a single Claude API call over the same text, without the web tools, so the box works with just an API key.
 
 To turn it on, set these in the Vercel project (Settings, Environment Variables):
 
 | Variable | What it is |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Required. Without it the box says asking is not set up. |
-| `ASK_ENVIRONMENT_ID`, `ASK_AGENT_ID` | Optional. Printed by `bun scripts/ask-setup.ts` (run once, locally, with the key set); with both present the box runs on Managed Agents. The agent's model and prompt live in `src/lib/ask.ts`; after changing them, `ASK_AGENT_ID=… bun scripts/ask-setup.ts update` publishes a new version of the same agent, which new sessions pick up. |
+| `ASK_ENVIRONMENT_ID`, `ASK_AGENT_ID` | Optional. Printed by `bun scripts/ask-setup.ts` (run once, locally, with the key set); with both present the box runs on Managed Agents. The agent's model and prompt live in `src/lib/ask.ts` and its tools in the script; after changing either, or adding a link to the page, `ASK_AGENT_ID=… ASK_ENVIRONMENT_ID=… bun scripts/ask-setup.ts update` publishes a new version of the same agent (and the environment's egress list), which new sessions pick up. |
 | `ASK_WORKSPACE` | Optional. The workspace the key belongs to, for the Console link the function logs when it opens a session; defaults to `default`. |
 
 Limits: 300-character questions, five a minute per address and 400 a day per function instance, and a $1 cap per agent session (a session that reaches it is dropped and the next question starts a fresh one). The per-address limit is in memory, so it holds per instance; a [Vercel Firewall](https://vercel.com/docs/vercel-firewall) rate-limit rule on `/api/ask` is the durable version.

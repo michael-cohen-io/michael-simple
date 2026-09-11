@@ -537,7 +537,9 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   await expect(box).toBeVisible();
   await box.getByRole("button", { name: "What did you build at Anthropic?" }).click();
   await expect(box.getByRole("status")).toContainText("You asked: What did you build at Anthropic?");
-  await expect(box.getByRole("status")).toContainText("Claude Managed Agents");
+  await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
+  await expect(box.getByRole("button", { name: "What is the brain / hands split?" })).toBeVisible();
+  await expect(box.getByRole("button", { name: "What did you build at Anthropic?" })).toHaveCount(0);
 
   await box.getByLabel("Your question").fill("please fail");
   await box.getByRole("button", { name: "Ask" }).click();
