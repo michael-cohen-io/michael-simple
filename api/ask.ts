@@ -22,8 +22,8 @@ import path from "node:path";
 
 import Anthropic from "@anthropic-ai/sdk";
 
-import { ASK_MODEL, ASK_SYSTEM, MAX_QUESTION_LENGTH, firstQuestion } from "../src/lib/ask";
-import { SITE_URL } from "../src/lib/site";
+import { ASK_MODEL, ASK_SYSTEM, MAX_QUESTION_LENGTH, firstQuestion } from "../src/lib/ask.js";
+import { SITE_URL } from "../src/lib/site.js";
 
 const PER_MINUTE = 5;
 const PER_DAY = 400;
