@@ -22,7 +22,7 @@ import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
 import { writing } from "@/content/writing";
 import { CONTACT_EMAIL, PROFILES, RESUME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import { companyViews } from "@/lib/work";
+import { companyViews, monthLabel } from "@/lib/work";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = path.join(root, "public");
@@ -72,7 +72,9 @@ const markdown = [
   ]),
   "## Writing & Talks",
   "",
-  ...writing.map((piece) => `- [${piece.title}](${piece.url}) (${piece.venue}): ${piece.summary}`),
+  ...[...writing]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((piece) => `- [${piece.title}](${piece.url}), ${piece.venue}, ${monthLabel(piece.date)}`),
   "",
   "## Education",
   "",
@@ -199,12 +201,14 @@ const resumeJson = {
     };
   }),
   skills: resume.skills.map((group) => ({ name: group.label, keywords: group.items })),
-  publications: writing.map((piece) => ({
-    name: piece.title,
-    publisher: piece.venue,
-    url: piece.url,
-    summary: piece.summary,
-  })),
+  publications: [...writing]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((piece) => ({
+      name: piece.title,
+      publisher: piece.venue,
+      releaseDate: piece.date,
+      url: piece.url,
+    })),
   meta: { canonical: `${SITE_URL}/resume.json`, version: "v1.0.0" },
 };
 
@@ -280,12 +284,12 @@ const resumeJsonSchema = {
       type: "array",
       items: {
         type: "object",
-        required: ["name", "publisher", "url", "summary"],
+        required: ["name", "publisher", "releaseDate", "url"],
         properties: {
           name: { type: "string" },
           publisher: { type: "string" },
+          releaseDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}$" },
           url: { type: "string", format: "uri" },
-          summary: { type: "string" },
         },
       },
     },

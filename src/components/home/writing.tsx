@@ -1,6 +1,10 @@
 import { writing, type Piece } from "@/content/writing";
+import { monthLabel } from "@/lib/work";
 
 import { SectionHeading } from "../typography/heading";
+
+/** Newest first; `YYYY-MM` strings order correctly as text. */
+const pieces = [...writing].sort((a, b) => b.date.localeCompare(a.date));
 
 /** What kind of thing each row is: a page of text, or something to watch. */
 function KindMark({ kind }: { kind: Piece["kind"] }) {
@@ -35,16 +39,15 @@ function KindMark({ kind }: { kind: Piece["kind"] }) {
 
 /**
  * Writing and talks: the public work behind the work history. One row per
- * piece from content/writing.ts, a mark for its kind, the title linked, the
- * venue and one line of summary under it. No dates, by design; the list is
- * curated, not a feed.
+ * piece from content/writing.ts, newest first: a mark for its kind, the
+ * title linked, and where and when it appeared.
  */
 export default function Writing() {
   return (
     <section aria-labelledby="writing-heading" className="flex w-full flex-col gap-2">
       <SectionHeading id="writing-heading">Writing &amp; Talks</SectionHeading>
       <ul className="divide-y">
-        {writing.map((piece) => (
+        {pieces.map((piece) => (
           <li key={piece.url} className="flex gap-3 py-3 first:pt-1 last:pb-0">
             <KindMark kind={piece.kind} />
             <div className="flex min-w-0 flex-col gap-1">
@@ -57,10 +60,9 @@ export default function Writing() {
                 {piece.title}
                 <span className="sr-only"> (opens in new tab)</span>
               </a>
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {piece.venue}
-              </span>
-              <p className="max-w-prose text-sm text-muted-foreground">{piece.summary}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {piece.venue} · <time dateTime={piece.date}>{monthLabel(piece.date)}</time>
+              </p>
             </div>
           </li>
         ))}

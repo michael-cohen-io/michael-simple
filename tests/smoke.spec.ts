@@ -427,7 +427,14 @@ test("lists writing and talks under the hero, from the content file", async ({ p
   await expect(section.getByRole("link", { name: /Decoupling the brain from the hands/ })).toBeVisible();
   // Every row carries a mark saying what it is: an article, or something to watch.
   expect(await section.locator("li svg").count()).toBe(await section.locator("li").count());
-  await expect(section.locator("li svg title").first()).toHaveText("Article");
+  // Each row: title, source and month, nothing else; newest first.
+  const rows = section.locator("li");
+  await expect(rows.first()).toContainText("Code with Claude, London · May 2026");
+  expect(await section.locator("li time").count()).toBe(await rows.count());
+  expect(await section.locator("li p").count()).toBe(await rows.count());
+  const months = await section.locator("li time").evaluateAll((els) => els.map((el) => el.getAttribute("datetime")));
+  expect([...months].sort().reverse()).toEqual(months);
+  await expect(section.locator("li svg title").first()).toHaveText(/Talk|Video/);
   expect(await section.locator("li svg title", { hasText: /Talk|Video/ }).count()).toBeGreaterThanOrEqual(1);
   // The section sits between the work history and Connect.
   const writing = await section.boundingBox();
@@ -483,7 +490,9 @@ test("flips the page into the Markdown an agent gets, and back", async ({ page }
   const agent = page.getByRole("region", { name: "The page as an agent receives it" });
   await expect(agent).toBeVisible();
   await expect(agent).toContainText("curl https://www.michaelcohen.io/llms.txt");
-  await expect(agent.getByRole("button", { name: "Copy" })).toBeVisible();
+  const copy = agent.getByRole("button", { name: "Copy the command" });
+  await expect(copy).toBeVisible();
+  await expect(copy).toHaveText("");
   await expect(agent.locator("pre")).toHaveCount(1);
   await expect(agent.locator("pre")).toContainText("# Michael Cohen");
   await expect(agent.locator("pre")).toContainText("## When to use this site");

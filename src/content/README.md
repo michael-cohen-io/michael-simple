@@ -10,5 +10,6 @@ the PDF (contact line, education, skills) is in `resume.ts`. The build fails
 if the PDF runs past one page.
 
 Writing and talks are `writing.ts`: one entry per piece with a title, URL,
-venue, one-line summary and a kind (`article`, `talk` or `video`). The list
-renders under the hero, into `index.md`, `llms.txt` and `resume.json`.
+venue, month (`YYYY-MM`) and a kind (`article`, `talk` or `video`). The list
+renders under the work history, newest first, and into `llms.txt` and
+`resume.json`.
