@@ -7,7 +7,7 @@ import { getServerView, getView, subscribe } from "@/lib/view-store";
 
 const command = `curl ${SITE_URL}/llms.txt`;
 
-/** Copies the command to the clipboard and says so for a moment. */
+/** Copies the command to the clipboard; the icon turns into a check for a moment. */
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -18,12 +18,33 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       type="button"
+      aria-label={copied ? "Copied" : "Copy the command"}
+      title={copied ? "Copied" : "Copy"}
       onClick={() => {
         navigator.clipboard.writeText(text).then(() => setCopied(true), () => setCopied(false));
       }}
-      className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      {copied ? "Copied" : "Copy"}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className="size-4"
+      >
+        {copied ? (
+          <path d="M20 6 9 17l-5-5" />
+        ) : (
+          <>
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+          </>
+        )}
+      </svg>
     </button>
   );
 }
@@ -32,7 +53,8 @@ function CopyButton({ text }: { text: string }) {
  * The page as an agent gets it: llms.txt, the one document that is also
  * what `/` returns for `Accept: text/markdown`, fetched from this same site
  * the first time the switch is flipped (it is a file in the export, so
- * nothing is duplicated in the HTML). Hidden, and empty, until then.
+ * nothing is duplicated in the HTML), with an icon-only copy button for
+ * the curl line. Hidden, and empty, until then.
  */
 export default function AgentView() {
   const view = useSyncExternalStore(subscribe, getView, getServerView);
