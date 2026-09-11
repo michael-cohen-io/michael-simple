@@ -9,7 +9,11 @@
 // visitor thread (its id, `sesn_…`, goes back to the browser and returns with
 // the next question), the event stream opened before the message is sent, and
 // the turn read as finished on `session.status_idle` only when its stop reason
-// asks nothing of the client, or on `session.status_terminated`.
+// asks nothing of the client, or on `session.status_terminated`. When it asks
+// something (`requires_action`), it is the agent's one custom tool,
+// `restyle_page` (Party Mode, src/lib/party.ts): the input is validated here,
+// the agent gets a `user.custom_tool_result` saying what is active, and the
+// effects ride back to the browser with the answer, which applies them.
 //
 // Limits: questions are capped at 300 characters; each function instance
 // allows 5 questions a minute per address and 400 a day in total, and a
@@ -23,6 +27,7 @@ import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 
 import { ASK_MODEL, ASK_SYSTEM, MAX_QUESTION_LENGTH, firstQuestion } from "../src/lib/ask.js";
+import { PARTY_TOOL, mergeEffects, validateEffects, type Effects } from "../src/lib/party.js";
 import { SITE_URL } from "../src/lib/site.js";
 
 const PER_MINUTE = 5;
@@ -85,7 +90,8 @@ async function askAgent(
   client: Anthropic,
   question: string,
   sessionId: string | null,
-): Promise<{ answer: string; sessionId: string | null }> {
+  active: Effects,
+): Promise<{ answer: string; sessionId: string | null; effects: Effects[] }> {
   const agentId = process.env.ASK_AGENT_ID!;
   const environmentId = process.env.ASK_ENVIRONMENT_ID!;
   let id = sessionId;
@@ -111,21 +117,46 @@ async function askAgent(
   });
 
   const parts: string[] = [];
+  const effects: Effects[] = [];
+  let pending: { id: string; name: string; input: unknown }[] = [];
   let reusable = true;
   const timer = setTimeout(() => stream.controller.abort(), DEADLINE_MS);
   try {
     for await (const event of stream) {
       if (event.type === "agent.message") {
         for (const block of event.content) if (block.type === "text") parts.push(block.text);
+      } else if (event.type === "agent.custom_tool_use") {
+        pending.push({ id: event.id, name: event.name, input: event.input });
       } else if (event.type === "session.status_terminated") {
         reusable = false;
         break;
       } else if (event.type === "session.status_idle") {
-        // Idle is only the end of the turn when nothing is asked of the client.
-        // The agent has no tools, so `requires_action` never fires, but the
-        // gate is the documented one. A session that hit its budget or ran
-        // out of retries is done: the next question starts a fresh one.
-        if (event.stop_reason.type === "requires_action") continue;
+        // Idle is the end of the turn unless the agent is waiting on this
+        // client, which means a custom tool call to answer; the session
+        // resumes on the same stream once the results are sent. A session
+        // that hit its budget or ran out of retries is done: the next
+        // question starts a fresh one.
+        if (event.stop_reason.type === "requires_action") {
+          if (pending.length === 0) break;
+          const results = pending.map((call) => {
+            if (call.name !== PARTY_TOOL.name) {
+              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id, is_error: true,
+                content: [{ type: "text" as const, text: `Unknown tool ${call.name}.` }] };
+            }
+            const checked = validateEffects(call.input);
+            if ("error" in checked) {
+              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id, is_error: true,
+                content: [{ type: "text" as const, text: `Nothing applied: ${checked.error}` }] };
+            }
+            effects.push(checked.effects);
+            active = mergeEffects(active, checked.effects);
+            return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id,
+              content: [{ type: "text" as const, text: `Applied. Active now: ${JSON.stringify(active)}` }] };
+          });
+          pending = [];
+          await client.beta.sessions.events.send(id, { events: results });
+          continue;
+        }
         if (event.stop_reason.type !== "end_turn") reusable = false;
         break;
       } else if (event.type === "session.error") {
@@ -135,8 +166,8 @@ async function askAgent(
   } finally {
     clearTimeout(timer);
   }
-  if (parts.length === 0) throw new Error("The agent did not answer in time.");
-  return { answer: parts.join("\n").trim(), sessionId: reusable ? id : null };
+  if (parts.length === 0 && effects.length === 0) throw new Error("The agent did not answer in time.");
+  return { answer: parts.join("\n").trim(), sessionId: reusable ? id : null, effects };
 }
 
 /** One Claude API call over the same context, until the agent is provisioned. */
@@ -160,7 +191,7 @@ async function askModel(client: Anthropic, question: string): Promise<string> {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { question?: unknown; sessionId?: unknown };
+  let body: { question?: unknown; sessionId?: unknown; party?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -173,6 +204,11 @@ export async function POST(request: Request): Promise<Response> {
   }
   const sessionId =
     typeof body.sessionId === "string" && /^sesn_[A-Za-z0-9_-]+$/.test(body.sessionId) ? body.sessionId : null;
+  // What Party Mode has active in this browser, so the agent's tool result
+  // reports the true state (the visitor may have switched it off locally).
+  const checkedParty = body.party === undefined ? { effects: {} } : validateEffects(body.party);
+  if ("error" in checkedParty) return problem(400, "Bad Request", `party: ${checkedParty.error}`, "invalid_party");
+  const party = checkedParty.effects;
 
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allow(address)) {
@@ -189,17 +225,17 @@ export async function POST(request: Request): Promise<Response> {
     if (useAgent) {
       let result: Awaited<ReturnType<typeof askAgent>>;
       try {
-        result = await askAgent(client, question, sessionId);
+        result = await askAgent(client, question, sessionId, party);
       } catch (error) {
         // A remembered session that is gone (deleted, archived) or that no
         // longer takes messages (paused at its budget): start over.
         const stale = error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError;
         if (!sessionId || !stale) throw error;
-        result = await askAgent(client, question, null);
+        result = await askAgent(client, question, null, party);
       }
       return json({ ...result, backend: "agent" });
     }
-    return json({ answer: await askModel(client, question), sessionId: null, backend: "messages" });
+    return json({ answer: await askModel(client, question), sessionId: null, effects: [], backend: "messages" });
   } catch (error) {
     if (error instanceof Anthropic.RateLimitError) {
       return problem(503, "Busy", "The agent is busy; try again in a moment.", "upstream_rate_limited");

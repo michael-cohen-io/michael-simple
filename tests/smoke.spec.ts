@@ -516,8 +516,25 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   // The function only exists on Vercel; here the route is answered in-page.
   const questions: string[] = [];
   await page.route("/api/ask", async (route) => {
-    const body = route.request().postDataJSON() as { question: string; sessionId: string | null };
+    const body = route.request().postDataJSON() as { question: string; sessionId: string | null; party: unknown };
     questions.push(body.question);
+    if (body.question === "Activate Party Mode") {
+      // The agent called restyle_page; the function validated it and passes it on.
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: "Party on.",
+          sessionId: "sesn_test",
+          backend: "agent",
+          effects: [
+            { scheme: "party", hue: 200, confetti: true, motion: { headings: "dance" }, banner: "It's a party" },
+            { text: "lowercase", replace: [{ from: "Work Experience", to: "Expérience" }] },
+          ],
+        }),
+      });
+      return;
+    }
     if (body.question.includes("fail")) {
       await route.fulfill({
         status: 429,
@@ -545,6 +562,27 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   await box.getByRole("button", { name: "Ask" }).click();
   await expect(box.getByRole("alert")).toContainText("Slow down a little.");
   expect(questions).toEqual(["What did you build at Anthropic?", "please fail"]);
+
+  // Party Mode: the effects land on <html>, the text, the layers; the pills
+  // turn into edits; "Turn it off" restores everything without a request.
+  const html = page.locator("html");
+  await box.getByRole("button", { name: "Activate Party Mode" }).click();
+  await expect(box.getByRole("status").last()).toContainText("Party on.");
+  await expect(html).toHaveAttribute("data-party-scheme", "party");
+  await expect(html).toHaveAttribute("data-party-motion-headings", "dance");
+  await expect(html).toHaveAttribute("data-party-text", "lowercase");
+  expect(await html.evaluate((el) => el.style.getPropertyValue("--party-hue"))).toBe("200");
+  await expect(page.locator(".party-confetti")).toBeAttached();
+  await expect(page.locator(".party-banner")).toContainText("It's a party");
+  await expect(page.locator("#work-heading")).toHaveText("Expérience");
+  await expect(box.getByRole("button", { name: "Make everything dance" })).toBeVisible();
+  await box.getByRole("button", { name: "Turn it off" }).click();
+  await expect(html).not.toHaveAttribute("data-party-scheme");
+  await expect(html).not.toHaveAttribute("data-party-text");
+  await expect(page.locator(".party-banner")).toHaveCount(0);
+  await expect(page.locator("#work-heading")).toHaveText("Work Experience");
+  await expect(box.getByRole("button", { name: "Activate Party Mode" })).toBeVisible();
+  expect(questions).toEqual(["What did you build at Anthropic?", "please fail", "Activate Party Mode"]);
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {

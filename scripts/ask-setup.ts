@@ -8,8 +8,10 @@
 //   bun scripts/ask-setup.ts            # create the environment and the agent
 //   ASK_AGENT_ID=agent_… ASK_ENVIRONMENT_ID=env_… bun scripts/ask-setup.ts update
 //
-// The agent has web search and web fetch, and nothing else: no bash, no
-// files. Both tools are allowed only the domains this page links to (the
+// The agent has web search and web fetch, and one custom tool, restyle_page
+// (Party Mode, src/lib/party.ts), which the function answers on the
+// browser's behalf; no bash, no files. The web tools are allowed only the
+// domains this page links to (the
 // employers, the writing, the profiles), read from the same content files
 // the page is built from; the environment's egress list is the same set.
 // The page's Markdown still arrives with the first question, so a content
@@ -25,6 +27,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { companies } from "@/content/work";
 import { writing } from "@/content/writing";
 import { ASK_MODEL, ASK_SYSTEM } from "@/lib/ask";
+import { PARTY_TOOL } from "@/lib/party";
 import { PROFILES, SITE_URL, SOURCE_URL } from "@/lib/site";
 
 /**
@@ -52,6 +55,7 @@ const agentConfig = {
   model: { id: ASK_MODEL, effort: "low" as const },
   system: ASK_SYSTEM,
   tools: [
+    PARTY_TOOL,
     {
       type: "agent_toolset_20260401" as const,
       default_config: { enabled: false },

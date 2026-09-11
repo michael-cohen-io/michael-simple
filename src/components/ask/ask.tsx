@@ -2,7 +2,10 @@
 
 import { useId, useRef, useState } from "react";
 
-type Answer = { answer: string; sessionId: string | null; backend: "agent" | "messages" };
+import { PartyLayer, usePartyMode } from "@/components/party/party";
+import { isActive, mergeEffects, type Effects } from "@/lib/party";
+
+type Answer = { answer: string; sessionId: string | null; backend: "agent" | "messages"; effects?: Effects[] };
 type Problem = { title?: string; detail?: string; code?: string };
 
 type State =
@@ -14,7 +17,15 @@ type State =
 const EXAMPLES = [
   "What did you build at Anthropic?",
   "What is the brain / hands split?",
-  "Are you a Gator?",
+  "Activate Party Mode",
+];
+
+/** Once the page is in Party Mode, the suggestions turn into edits. */
+const PARTY_EXAMPLES = [
+  "Make everything dance",
+  "Translate the page to French",
+  "Lowercase all the letters",
+  "Comic Sans, obviously",
 ];
 
 /**
@@ -24,12 +35,19 @@ const EXAMPLES = [
  * single Claude API call over the same text). Follow-up questions reuse
  * the agent's session so it keeps the thread. On a host without the
  * function (a local static build), the box says so.
+ *
+ * The agent's one tool restyles this page (Party Mode, src/lib/party.ts):
+ * the effects come back with the answer, merge into `party`, and
+ * usePartyMode applies them; each question carries the active state so
+ * the agent knows what it is composing on, and "Turn it off" clears it here.
  */
 export default function Ask() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [party, setParty] = useState<Effects>({});
   const input = useRef<HTMLInputElement>(null);
   const id = useId();
+  usePartyMode(party);
 
   const ask = async (question: string) => {
     const trimmed = question.trim();
@@ -39,7 +57,7 @@ export default function Ask() {
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ question: trimmed, sessionId }),
+        body: JSON.stringify({ question: trimmed, sessionId, party }),
       });
       const type = response.headers.get("content-type") ?? "";
       if (!type.includes("json")) {
@@ -52,6 +70,7 @@ export default function Ask() {
       const body = (await response.json()) as Answer & Problem;
       if (!response.ok) throw new Error(body.detail ?? body.title ?? `Request failed (${response.status}).`);
       setSessionId(body.sessionId);
+      if (body.effects?.length) setParty(body.effects.reduce(mergeEffects, party));
       setState({ kind: "answered", question: trimmed, answer: body });
     } catch (error) {
       setState({ kind: "failed", question: trimmed, message: error instanceof Error ? error.message : String(error) });
@@ -59,7 +78,8 @@ export default function Ask() {
   };
 
   return (
-    <section aria-labelledby={`${id}-heading`} className="flex w-full flex-col gap-3">
+    <section aria-labelledby={`${id}-heading`} className="flex w-full flex-col gap-3" data-party-static>
+      <PartyLayer effects={party} />
       <h2 id={`${id}-heading`} className="text-base font-semibold">
         Ask about my work
       </h2>
@@ -116,7 +136,9 @@ export default function Ask() {
       {state.kind !== "asking" && (
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span>{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
-          {EXAMPLES.filter((example) => state.kind === "idle" || example !== state.question).map((example) => (
+          {(isActive(party) ? PARTY_EXAMPLES : EXAMPLES)
+            .filter((example) => state.kind === "idle" || example !== state.question)
+            .map((example) => (
             <button
               key={example}
               type="button"
@@ -129,6 +151,18 @@ export default function Ask() {
               {example}
             </button>
           ))}
+          {isActive(party) && (
+            <button
+              type="button"
+              className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
+              onClick={() => {
+                setParty({});
+                setState({ kind: "idle" });
+              }}
+            >
+              Turn it off
+            </button>
+          )}
         </p>
       )}
     </section>

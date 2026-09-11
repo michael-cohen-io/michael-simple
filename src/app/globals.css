@@ -229,3 +229,157 @@ html[data-view="agent"] .human-view {
     word-break: break-all;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Party Mode (src/lib/party.ts, src/components/party/party.tsx). The agent's
+ * one custom tool sets data attributes and --party-hue on <html>; everything
+ * it can do to the page is written here, behind those attributes. Motion is
+ * off under prefers-reduced-motion, like the timeline's.
+ * ------------------------------------------------------------------------- */
+
+@property --pink-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 348;
+}
+
+html[style*="--party-hue"] {
+  --pink-hue: var(--party-hue);
+}
+
+[data-party-scheme="light"] {
+  color-scheme: light;
+}
+[data-party-scheme="dark"] {
+  color-scheme: dark;
+}
+
+[data-party-text="lowercase"] :is(header, #main) {
+  text-transform: lowercase;
+}
+[data-party-text="uppercase"] :is(header, #main) {
+  text-transform: uppercase;
+}
+[data-party-text="capitalize"] :is(header, #main) {
+  text-transform: capitalize;
+}
+
+[data-party-font="mono"] body {
+  font-family: var(--font-mono);
+}
+[data-party-font="serif"] body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+}
+[data-party-font="comic"] body {
+  font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive;
+}
+
+.party-banner {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 50;
+  overflow: hidden;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+  padding-block: 0.35rem;
+  white-space: nowrap;
+}
+.party-banner span {
+  display: inline-block;
+  padding-inline-start: 100vw;
+}
+
+.party-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  overflow: hidden;
+  pointer-events: none;
+}
+.party-confetti span {
+  position: absolute;
+  top: -3vh;
+  width: 0.6rem;
+  height: 0.9rem;
+  border-radius: 0.1rem;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-party-scheme="party"] {
+    animation: party-hue 12s linear infinite;
+  }
+  .party-banner span {
+    animation: party-marquee 14s linear infinite;
+  }
+  .party-confetti span {
+    animation-name: party-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  /* Motion per target. `everything` is the page's sections; the ask box
+     itself and the fixed layers stay still so the controls are usable. */
+  [data-party-motion-headings="dance"] :is(h1, h2, h3),
+  [data-party-motion-links="dance"] :is(header, #main) a,
+  [data-party-motion-cards="dance"] .bg-card,
+  [data-party-motion-everything="dance"] #main > :not(:has(form)) {
+    animation: party-dance 0.9s ease-in-out infinite;
+  }
+  [data-party-motion-headings="bounce"] :is(h1, h2, h3),
+  [data-party-motion-links="bounce"] :is(header, #main) a,
+  [data-party-motion-cards="bounce"] .bg-card,
+  [data-party-motion-everything="bounce"] #main > :not(:has(form)) {
+    animation: party-bounce 0.8s ease-in-out infinite;
+  }
+  [data-party-motion-headings="spin"] :is(h1, h2, h3),
+  [data-party-motion-links="spin"] :is(header, #main) a,
+  [data-party-motion-cards="spin"] .bg-card,
+  [data-party-motion-everything="spin"] #main > :not(:has(form)) {
+    animation: party-spin 4s linear infinite;
+  }
+  [data-party-motion-headings="rainbow"] :is(h1, h2, h3),
+  [data-party-motion-links="rainbow"] :is(header, #main) a,
+  [data-party-motion-cards="rainbow"] .bg-card,
+  [data-party-motion-everything="rainbow"] #main > :not(:has(form)) {
+    animation: party-rainbow 3s linear infinite;
+  }
+  [data-party-motion-headings] :is(h1, h2, h3),
+  [data-party-motion-links] a,
+  [data-party-motion-cards] .bg-card,
+  [data-party-motion-everything] #main > * {
+    display: inline-block;
+    transform-origin: center;
+  }
+  [data-party-motion-everything] #main > * {
+    display: block;
+  }
+}
+
+@keyframes party-hue {
+  from { --pink-hue: 0; }
+  to { --pink-hue: 360; }
+}
+@keyframes party-marquee {
+  to { transform: translateX(-100%); }
+}
+@keyframes party-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0.8; }
+}
+@keyframes party-dance {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50% { transform: rotate(3deg) translateY(-3px); }
+}
+@keyframes party-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes party-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes party-rainbow {
+  to { filter: hue-rotate(360deg); }
+}
