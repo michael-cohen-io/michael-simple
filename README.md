@@ -45,9 +45,10 @@ To turn it on, set these in the Vercel project (Settings, Environment Variables)
 | Variable | What it is |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Required. Without it the box says asking is not set up. |
-| `ASK_ENVIRONMENT_ID`, `ASK_AGENT_ID` | Optional. Printed by `bun scripts/ask-setup.ts` (run once, locally, with the key set); with both present the box runs on Managed Agents. |
+| `ASK_ENVIRONMENT_ID`, `ASK_AGENT_ID` | Optional. Printed by `bun scripts/ask-setup.ts` (run once, locally, with the key set); with both present the box runs on Managed Agents. The agent's model and prompt live in `src/lib/ask.ts`; after changing them, `ASK_AGENT_ID=… bun scripts/ask-setup.ts update` publishes a new version of the same agent, which new sessions pick up. |
+| `ASK_WORKSPACE` | Optional. The workspace the key belongs to, for the Console link the function logs when it opens a session; defaults to `default`. |
 
-Limits: 300-character questions, five a minute per address and 400 a day per function instance, and a $1 cap per agent session. The per-address limit is in memory, so it holds per instance; a [Vercel Firewall](https://vercel.com/docs/vercel-firewall) rate-limit rule on `/api/ask` is the durable version.
+Limits: 300-character questions, five a minute per address and 400 a day per function instance, and a $1 cap per agent session (a session that reaches it is dropped and the next question starts a fresh one). The per-address limit is in memory, so it holds per instance; a [Vercel Firewall](https://vercel.com/docs/vercel-firewall) rate-limit rule on `/api/ask` is the durable version.
 
 ## Checks
 

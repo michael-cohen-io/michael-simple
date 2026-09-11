@@ -5,6 +5,12 @@
 // and otherwise through a single Claude API call over the same text. Every
 // error is an RFC 9457 problem document, like the middleware's 404.
 //
+// The agent turn follows the Managed Agents client patterns: one session per
+// visitor thread (its id, `sesn_…`, goes back to the browser and returns with
+// the next question), the event stream opened before the message is sent, and
+// the turn read as finished on `session.status_idle` only when its stop reason
+// asks nothing of the client, or on `session.status_terminated`.
+//
 // Limits: questions are capped at 300 characters; each function instance
 // allows 5 questions a minute per address and 400 a day in total, and a
 // Managed Agents session carries a hard spend cap. These are in-memory,
@@ -69,12 +75,17 @@ async function context(): Promise<string> {
   }
 }
 
+/** The session's trace in the Console; `default` assumes the key's workspace. */
+function consoleUrl(sessionId: string): string {
+  return `https://platform.claude.com/workspaces/${process.env.ASK_WORKSPACE ?? "default"}/sessions/${sessionId}`;
+}
+
 /** One turn of a Managed Agents session; a new session when none is given. */
 async function askAgent(
   client: Anthropic,
   question: string,
   sessionId: string | null,
-): Promise<{ answer: string; sessionId: string }> {
+): Promise<{ answer: string; sessionId: string | null }> {
   const agentId = process.env.ASK_AGENT_ID!;
   const environmentId = process.env.ASK_ENVIRONMENT_ID!;
   let id = sessionId;
@@ -89,21 +100,33 @@ async function askAgent(
     });
     id = session.id;
     text = firstQuestion(await context(), question);
+    console.log(JSON.stringify({ event: "ask_session", sessionId: id, console: consoleUrl(id) }));
   }
 
-  // Stream first, then send: the stream only carries events after it opens.
+  // Stream first, then send: the stream buffers from the moment it opens,
+  // so nothing the agent emits after the message lands is missed.
   const stream = await client.beta.sessions.events.stream(id);
   await client.beta.sessions.events.send(id, {
     events: [{ type: "user.message", content: [{ type: "text", text }] }],
   });
 
   const parts: string[] = [];
+  let reusable = true;
   const timer = setTimeout(() => stream.controller.abort(), DEADLINE_MS);
   try {
     for await (const event of stream) {
       if (event.type === "agent.message") {
         for (const block of event.content) if (block.type === "text") parts.push(block.text);
-      } else if (event.type === "session.status_idle" || event.type === "session.status_terminated") {
+      } else if (event.type === "session.status_terminated") {
+        reusable = false;
+        break;
+      } else if (event.type === "session.status_idle") {
+        // Idle is only the end of the turn when nothing is asked of the client.
+        // The agent has no tools, so `requires_action` never fires, but the
+        // gate is the documented one. A session that hit its budget or ran
+        // out of retries is done: the next question starts a fresh one.
+        if (event.stop_reason.type === "requires_action") continue;
+        if (event.stop_reason.type !== "end_turn") reusable = false;
         break;
       } else if (event.type === "session.error") {
         throw new Error(event.error.message);
@@ -113,7 +136,7 @@ async function askAgent(
     clearTimeout(timer);
   }
   if (parts.length === 0) throw new Error("The agent did not answer in time.");
-  return { answer: parts.join("\n").trim(), sessionId: id };
+  return { answer: parts.join("\n").trim(), sessionId: reusable ? id : null };
 }
 
 /** One Claude API call over the same context, until the agent is provisioned. */
@@ -149,7 +172,7 @@ export async function POST(request: Request): Promise<Response> {
     return problem(400, "Bad Request", `Keep the question under ${MAX_QUESTION_LENGTH} characters.`, "question_too_long");
   }
   const sessionId =
-    typeof body.sessionId === "string" && /^sess_[A-Za-z0-9_-]+$/.test(body.sessionId) ? body.sessionId : null;
+    typeof body.sessionId === "string" && /^sesn_[A-Za-z0-9_-]+$/.test(body.sessionId) ? body.sessionId : null;
 
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allow(address)) {
@@ -164,7 +187,16 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     if (useAgent) {
-      const result = await askAgent(client, question, sessionId);
+      let result: Awaited<ReturnType<typeof askAgent>>;
+      try {
+        result = await askAgent(client, question, sessionId);
+      } catch (error) {
+        // A remembered session that is gone (deleted, archived) or that no
+        // longer takes messages (paused at its budget): start over.
+        const stale = error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError;
+        if (!sessionId || !stale) throw error;
+        result = await askAgent(client, question, null);
+      }
       return json({ ...result, backend: "agent" });
     }
     return json({ answer: await askModel(client, question), sessionId: null, backend: "messages" });

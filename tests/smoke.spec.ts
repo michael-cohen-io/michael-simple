@@ -529,7 +529,7 @@ test("asks the agent from the box under the hero", async ({ page }) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ answer: `You asked: ${body.question}`, sessionId: "sess_test", backend: "agent" }),
+      body: JSON.stringify({ answer: `You asked: ${body.question}`, sessionId: "sesn_test", backend: "agent" }),
     });
   });
   await page.goto("/", { waitUntil: "networkidle" });
