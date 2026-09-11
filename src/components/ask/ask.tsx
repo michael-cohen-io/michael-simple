@@ -14,8 +14,7 @@ type State =
 const EXAMPLES = [
   "What did you build at Anthropic?",
   "What is the brain / hands split?",
-  "What did you work on at OpenSea?",
-  "Which brands did you launch NFT drops with?",
+  "Are you a Gator?",
 ];
 
 /**
