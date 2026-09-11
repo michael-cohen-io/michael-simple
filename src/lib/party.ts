@@ -1,5 +1,5 @@
 /**
- * Party Mode: the one thing the "Ask about my work" agent can do to the page
+ * Party Mode: the one thing the "Ask Claude about me" agent can do to the page
  * besides answer. The agent has a custom, client-side tool, `restyle_page`;
  * when it calls the tool the Vercel Function (api/ask.ts) validates the
  * input against this catalog, tells the agent it is applied, and hands the
@@ -43,9 +43,12 @@ export type Effects = {
   banner?: string;
 };
 
-export const MAX_REPLACEMENTS = 300;
-export const MAX_REPLACEMENT_LENGTH = 500;
+export const MAX_REPLACEMENTS = 400;
+export const MAX_REPLACEMENT_LENGTH = 1000;
 export const MAX_BANNER_LENGTH = 120;
+/** The page's visible text runs, as the browser sends them with a question. */
+export const MAX_RUNS = 500;
+export const MAX_RUN_LENGTH = 1000;
 
 export const PARTY_TOOL = {
   type: "custom" as const,
@@ -53,12 +56,14 @@ export const PARTY_TOOL = {
   description: [
     "Changes how michaelcohen.io looks for this visitor, right now, in their browser. Use it whenever the visitor asks for Party Mode or for any visual change: colours, motion, letter case, fonts, a banner, or the page in another language.",
     "Every field is optional and merges over what is already active, so a follow-up only needs the fields that change; `reset: true` starts over first.",
-    "Party Mode is: scheme \"party\", a fresh hue, confetti, headings dancing, and a short banner. Translating the page is `replace`: pairs of the exact visible strings from the page context (the hero sentence, section titles, role titles, dates, bullets, link labels) and their translation; keep names, companies and product names as they are.",
-    "The tool returns what is active afterwards. Reply to the visitor in one short sentence; do not describe every field.",
+    "Party Mode is: scheme \"party\", a fresh hue, confetti, headings dancing, and a short banner. A hue alone (with scheme \"default\" or the visitor's light/dark) recolours the whole page steadily; scheme \"party\" cycles it.",
+    "To translate or rewrite the page's text, call first with `list_text: true`: the result lists every visible text run on the page, numbered, exactly as the visitor sees it now. Then call again with `replace`, one pair per run in the same order (`from` is the run verbatim, `to` its new text), covering every run that has words in it, including headings, labels, dates and every bullet. Keep names, companies, product names and URLs as they are. Pairs apply in order on top of what is active, so a later rewrite works from the runs as they read then.",
+    "The tool returns what is active afterwards. Reply to the visitor in one short sentence, in the page's new language if you changed it; do not describe every field.",
   ].join(" "),
   input_schema: {
     type: "object" as const,
     properties: {
+      list_text: { type: "boolean", description: "Return every visible text run on the page, numbered, instead of changing anything else in this call." },
       reset: { type: "boolean", description: "Start over before applying the rest." },
       hue: { type: "number", minimum: 0, maximum: 360, description: "Accent hue in degrees; the palette follows it." },
       scheme: { type: "string", enum: [...SCHEMES], description: "party cycles the hue; default returns to the visitor's theme." },
@@ -96,14 +101,19 @@ function oneOf<T extends string>(value: unknown, options: readonly T[]): value i
  * The tool input as validated Effects, or a message for the agent saying
  * what was wrong (fail closed: nothing of a bad call is applied).
  */
-export function validateEffects(input: unknown): { effects: Effects } | { error: string } {
+export function validateEffects(input: unknown): { effects: Effects; listText: boolean } | { error: string } {
   if (typeof input !== "object" || input === null || Array.isArray(input)) return { error: "Input must be an object." };
   const raw = input as Record<string, unknown>;
   const effects: Effects = {};
+  let listText = false;
   for (const key of Object.keys(raw)) {
     const value = raw[key];
     if (value === undefined || value === null) continue;
     switch (key) {
+      case "list_text":
+        if (typeof value !== "boolean") return { error: "list_text must be a boolean." };
+        listText = value;
+        break;
       case "reset":
       case "confetti":
         if (typeof value !== "boolean") return { error: `${key} must be a boolean.` };
@@ -163,10 +173,25 @@ export function validateEffects(input: unknown): { effects: Effects } | { error:
         return { error: `Unknown field ${key}.` };
     }
   }
-  return { effects };
+  return { effects, listText };
 }
 
-/** What is active after `next` lands on `active`: fields override, motion merges, replacements accumulate. */
+/** The text runs a browser sends: strings, trimmed, deduplicated, capped. */
+export function validateRuns(input: unknown): { runs: string[] } | { error: string } {
+  if (input === undefined) return { runs: [] };
+  if (!Array.isArray(input)) return { error: "runs must be an array of strings." };
+  if (input.length > MAX_RUNS) return { error: `runs takes at most ${MAX_RUNS} strings.` };
+  const runs: string[] = [];
+  for (const run of input as unknown[]) {
+    if (typeof run !== "string") return { error: "runs must be an array of strings." };
+    if (run.length > MAX_RUN_LENGTH) return { error: `each run is at most ${MAX_RUN_LENGTH} characters.` };
+    const trimmed = run.trim();
+    if (trimmed && !runs.includes(trimmed)) runs.push(trimmed);
+  }
+  return { runs };
+}
+
+/** What is active after `next` lands on `active`: fields override, motion merges, replacements accumulate in order. */
 export function mergeEffects(active: Effects, next: Effects): Effects {
   const base: Effects = next.reset ? {} : { ...active };
   const merged: Effects = { ...base, ...next };

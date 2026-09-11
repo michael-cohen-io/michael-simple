@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo, useRef } from "react";
 
-import { TARGETS, type Effects } from "@/lib/party";
+import { MAX_RUNS, TARGETS, type Effects } from "@/lib/party";
 
 /**
  * Applies Party Mode (src/lib/party.ts) to the document: the hue and scheme
@@ -14,7 +15,13 @@ import { TARGETS, type Effects } from "@/lib/party";
  * the effects go back to nothing.
  */
 
-const ROOT_ATTRIBUTES = ["data-party-scheme", "data-party-text", "data-party-font", ...TARGETS.map((t) => `data-party-motion-${t}`)];
+const ROOT_ATTRIBUTES = [
+  "data-party-scheme",
+  "data-party-text",
+  "data-party-font",
+  "data-party-banner",
+  ...TARGETS.map((t) => `data-party-motion-${t}`),
+];
 
 /** The original text of every node this component has touched. */
 const originals = new WeakMap<Text, string>();
@@ -33,16 +40,30 @@ function textNodes(): Text[] {
   return nodes;
 }
 
+/**
+ * Pairs apply in the order given, each on the text as the earlier ones left
+ * it, so a later rewrite can start from the runs the visitor saw at the time.
+ */
 function applyReplacements(pairs: { from: string; to: string }[]) {
-  // Longest first, so "Work Experience" wins over "Work".
-  const ordered = [...pairs].sort((a, b) => b.from.length - a.from.length);
   for (const node of textNodes()) {
     const original = originals.get(node) ?? node.nodeValue ?? "";
     if (!originals.has(node)) originals.set(node, original);
     let text = original;
-    for (const { from, to } of ordered) if (text.includes(from)) text = text.split(from).join(to);
+    for (const { from, to } of pairs) if (text.includes(from)) text = text.split(from).join(to);
     if (node.nodeValue !== text) node.nodeValue = text;
   }
+}
+
+/** The page's visible text, one string per run, as the visitor sees it now. */
+export function collectRuns(): string[] {
+  if (typeof document === "undefined") return [];
+  const runs: string[] = [];
+  for (const node of textNodes()) {
+    const text = (node.nodeValue ?? "").trim();
+    if (text && !runs.includes(text)) runs.push(text);
+    if (runs.length >= MAX_RUNS) break;
+  }
+  return runs;
 }
 
 function restoreText() {
@@ -53,6 +74,22 @@ function restoreText() {
 }
 
 export function usePartyMode(effects: Effects) {
+  const { theme, setTheme } = useTheme();
+  // The visitor's own theme, remembered the first time a scheme changes it
+  // and put back when Party Mode ends or the scheme goes back to default.
+  const before = useRef<string | null>(null);
+  const scheme = effects.scheme;
+  useEffect(() => {
+    if (scheme === "light" || scheme === "dark") {
+      if (before.current === null) before.current = theme ?? "system";
+      setTheme(scheme);
+    } else if (before.current !== null) {
+      setTheme(before.current);
+      before.current = null;
+    }
+    // `theme` is read once, when the scheme first changes; following it would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheme, setTheme]);
   useEffect(() => {
     const root = document.documentElement;
     for (const name of ROOT_ATTRIBUTES) root.removeAttribute(name);
@@ -61,6 +98,7 @@ export function usePartyMode(effects: Effects) {
     if (effects.hue !== undefined) root.style.setProperty("--party-hue", String(effects.hue));
     if (effects.text && effects.text !== "none") root.setAttribute("data-party-text", effects.text);
     if (effects.font && effects.font !== "default") root.setAttribute("data-party-font", effects.font);
+    if (effects.banner) root.setAttribute("data-party-banner", "");
     for (const target of TARGETS) {
       const motion = effects.motion?.[target];
       if (motion && motion !== "none") root.setAttribute(`data-party-motion-${target}`, motion);

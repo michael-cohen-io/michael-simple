@@ -516,8 +516,11 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   // The function only exists on Vercel; here the route is answered in-page.
   const questions: string[] = [];
   await page.route("/api/ask", async (route) => {
-    const body = route.request().postDataJSON() as { question: string; sessionId: string | null; party: unknown };
+    const body = route.request().postDataJSON() as { question: string; sessionId: string | null; party: unknown; runs: string[] };
     questions.push(body.question);
+    // Every question carries the page's visible text runs, for the tool's list_text step.
+    expect(body.runs).toContain("Work Experience");
+    expect(body.runs.length).toBeGreaterThan(20);
     if (body.question === "Activate Party Mode") {
       // The agent called restyle_page; the function validated it and passes it on.
       await route.fulfill({
@@ -550,8 +553,11 @@ test("asks the agent from the box under the hero", async ({ page }) => {
     });
   });
   await page.goto("/", { waitUntil: "networkidle" });
-  const box = page.getByRole("region", { name: "Ask about my work" });
+  const box = page.getByRole("region", { name: "Ask Claude about me" });
   await expect(box).toBeVisible();
+  // Folded shut by default; the trigger is the heading.
+  await expect(box.getByRole("button", { name: "What did you build at Anthropic?" })).toBeHidden();
+  await box.getByRole("button", { name: "Ask Claude about me" }).click();
   await box.getByRole("button", { name: "What did you build at Anthropic?" }).click();
   await expect(box.getByRole("status")).toContainText("You asked: What did you build at Anthropic?");
   await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
@@ -559,7 +565,7 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   await expect(box.getByRole("button", { name: "What did you build at Anthropic?" })).toHaveCount(0);
 
   await box.getByLabel("Your question").fill("please fail");
-  await box.getByRole("button", { name: "Ask" }).click();
+  await box.getByRole("button", { name: "Ask Claude", exact: true }).click();
   await expect(box.getByRole("alert")).toContainText("Slow down a little.");
   expect(questions).toEqual(["What did you build at Anthropic?", "please fail"]);
 

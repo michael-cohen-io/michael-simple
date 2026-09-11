@@ -1,11 +1,21 @@
 "use client";
 
+import { Collapsible } from "@base-ui/react/collapsible";
 import { useId, useRef, useState } from "react";
 
-import { PartyLayer, usePartyMode } from "@/components/party/party";
+import {
+  PartyLayer,
+  collectRuns,
+  usePartyMode,
+} from "@/components/party/party";
 import { isActive, mergeEffects, type Effects } from "@/lib/party";
 
-type Answer = { answer: string; sessionId: string | null; backend: "agent" | "messages"; effects?: Effects[] };
+type Answer = {
+  answer: string;
+  sessionId: string | null;
+  backend: "agent" | "messages";
+  effects?: Effects[];
+};
 type Problem = { title?: string; detail?: string; code?: string };
 
 type State =
@@ -28,8 +38,60 @@ const PARTY_EXAMPLES = [
   "Comic Sans, obviously",
 ];
 
+/** Claude's mark, drawn inline: twelve rounded spokes of uneven length. */
+function ClaudeMark({ className }: { className?: string }) {
+  const spokes = [9, 6, 8.5, 6.5, 9, 5.5, 8.5, 7, 9, 6, 8.5, 6.5];
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+    >
+      <g
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        fill="none"
+      >
+        {spokes.map((length, i) => (
+          <line
+            key={i}
+            x1="12"
+            y1="12"
+            x2="12"
+            y2={12 - length}
+            transform={`rotate(${i * 30} 12 12)`}
+          />
+        ))}
+        <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+      </g>
+    </svg>
+  );
+}
+
+/** A chevron for the section's trigger, the same one the accordion draws. */
+function Chevron({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 /**
- * "Ask about my work": a question box under the hero. The answer comes from
+ * "Ask Claude about me": a question box under the hero, folded shut until
+ * the visitor opens it. The answer comes from
  * /api/ask, a Vercel Function that runs a Claude Managed Agent grounded on
  * this page's own Markdown twin (or, until the agent is provisioned, a
  * single Claude API call over the same text). Follow-up questions reuse
@@ -56,8 +118,17 @@ export default function Ask() {
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ question: trimmed, sessionId, party }),
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        // The page's visible text goes along, so the agent can list and rewrite it.
+        body: JSON.stringify({
+          question: trimmed,
+          sessionId,
+          party,
+          runs: collectRuns(),
+        }),
       });
       const type = response.headers.get("content-type") ?? "";
       if (!type.includes("json")) {
@@ -68,103 +139,144 @@ export default function Ask() {
         );
       }
       const body = (await response.json()) as Answer & Problem;
-      if (!response.ok) throw new Error(body.detail ?? body.title ?? `Request failed (${response.status}).`);
+      if (!response.ok)
+        throw new Error(
+          body.detail ?? body.title ?? `Request failed (${response.status}).`,
+        );
       setSessionId(body.sessionId);
-      if (body.effects?.length) setParty(body.effects.reduce(mergeEffects, party));
+      if (body.effects?.length)
+        setParty(body.effects.reduce(mergeEffects, party));
       setState({ kind: "answered", question: trimmed, answer: body });
     } catch (error) {
-      setState({ kind: "failed", question: trimmed, message: error instanceof Error ? error.message : String(error) });
+      setState({
+        kind: "failed",
+        question: trimmed,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   return (
-    <section aria-labelledby={`${id}-heading`} className="flex w-full flex-col gap-3" data-party-static>
+    <section
+      aria-labelledby={`${id}-heading`}
+      className="flex w-full flex-col"
+      data-party-static
+    >
       <PartyLayer effects={party} />
-      <h2 id={`${id}-heading`} className="text-base font-semibold">
-        Ask about my work
-      </h2>
-      <form
-        className="flex flex-col gap-2 sm:flex-row"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void ask(input.current?.value ?? "");
-        }}
-      >
-        <label htmlFor={`${id}-question`} className="sr-only">
-          Your question
-        </label>
-        <input
-          ref={input}
-          id={`${id}-question`}
-          name="question"
-          type="text"
-          maxLength={300}
-          autoComplete="off"
-          placeholder="What did you build at Anthropic?"
-          disabled={state.kind === "asking"}
-          className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={state.kind === "asking"}
-          className="h-11 shrink-0 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground outline-hidden transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
-        >
-          {state.kind === "asking" ? "Asking…" : "Ask"}
-        </button>
-      </form>
-      {state.kind === "asking" && (
-        <p className="text-sm text-muted-foreground" role="status">
-          Asking the agent…
-        </p>
-      )}
-      {state.kind === "answered" && (
-        <div className="flex flex-col gap-2 rounded-lg bg-muted p-4 text-sm" role="status">
-          <p className="font-medium text-muted-foreground">{state.question}</p>
-          <p className="whitespace-pre-wrap">{state.answer.answer}</p>
-          <p className="text-xs text-muted-foreground">
-            {state.answer.backend === "agent" ? "Powered by Claude Managed Agents." : "Powered by Claude."}
-          </p>
-        </div>
-      )}
-      {state.kind === "failed" && (
-        <p className="text-sm text-muted-foreground" role="alert">
-          {state.message}
-        </p>
-      )}
-      {/* The suggestions stay under the answer, so a thread can keep going
+      <Collapsible.Root defaultOpen={false} className="flex flex-col">
+        <h2 id={`${id}-heading`} className="text-base font-semibold">
+          <Collapsible.Trigger className="group/ask flex w-full items-center justify-between py-2 text-left outline-hidden transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+            Ask Claude about me
+            <Chevron className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none group-data-[panel-open]/ask:rotate-180" />
+          </Collapsible.Trigger>
+        </h2>
+        <Collapsible.Panel className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
+          <div className="flex flex-col gap-3 pt-1 pb-1">
+            <form
+              className="flex flex-col gap-2 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void ask(input.current?.value ?? "");
+              }}
+            >
+              <label htmlFor={`${id}-question`} className="sr-only">
+                Your question
+              </label>
+              <input
+                ref={input}
+                id={`${id}-question`}
+                name="question"
+                type="text"
+                maxLength={300}
+                autoComplete="off"
+                placeholder="What did you build at Anthropic?"
+                disabled={state.kind === "asking"}
+                className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={state.kind === "asking"}
+                aria-label={
+                  state.kind === "asking" ? "Asking Claude…" : "Ask Claude"
+                }
+                title="Ask Claude"
+                className="flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-md bg-primary text-primary-foreground outline-hidden transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60 sm:self-auto"
+              >
+                <ClaudeMark
+                  className={
+                    state.kind === "asking"
+                      ? "size-5 animate-spin [animation-duration:2.5s] motion-reduce:animate-pulse"
+                      : "size-5"
+                  }
+                />
+              </button>
+            </form>
+            {state.kind === "asking" && (
+              <p className="text-sm text-muted-foreground" role="status">
+                Asking the agent…
+              </p>
+            )}
+            {state.kind === "answered" && (
+              <div
+                className="flex flex-col gap-2 rounded-lg bg-muted p-4 text-sm"
+                role="status"
+              >
+                <p className="font-medium text-muted-foreground">
+                  {state.question}
+                </p>
+                <p className="whitespace-pre-wrap">{state.answer.answer}</p>
+                <p className="text-xs text-muted-foreground">
+                  {state.answer.backend === "agent"
+                    ? "Powered by Claude Managed Agents."
+                    : "Powered by Claude."}
+                </p>
+              </div>
+            )}
+            {state.kind === "failed" && (
+              <p className="text-sm text-muted-foreground" role="alert">
+                {state.message}
+              </p>
+            )}
+            {/* The suggestions stay under the answer, so a thread can keep going
           with one click; the one just asked steps aside. */}
-      {state.kind !== "asking" && (
-        <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
-          {(isActive(party) ? PARTY_EXAMPLES : EXAMPLES)
-            .filter((example) => state.kind === "idle" || example !== state.question)
-            .map((example) => (
-            <button
-              key={example}
-              type="button"
-              className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
-              onClick={() => {
-                if (input.current) input.current.value = example;
-                void ask(example);
-              }}
-            >
-              {example}
-            </button>
-          ))}
-          {isActive(party) && (
-            <button
-              type="button"
-              className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
-              onClick={() => {
-                setParty({});
-                setState({ kind: "idle" });
-              }}
-            >
-              Turn it off
-            </button>
-          )}
-        </p>
-      )}
+            {state.kind !== "asking" && (
+              <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
+                {(isActive(party) ? PARTY_EXAMPLES : EXAMPLES)
+                  .filter(
+                    (example) =>
+                      state.kind === "idle" || example !== state.question,
+                  )
+                  .map((example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
+                      onClick={() => {
+                        if (input.current) input.current.value = example;
+                        void ask(example);
+                      }}
+                    >
+                      {example}
+                    </button>
+                  ))}
+                {isActive(party) && (
+                  <button
+                    type="button"
+                    className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
+                    onClick={() => {
+                      setParty({});
+                      setState({ kind: "idle" });
+                    }}
+                  >
+                    Turn it off
+                  </button>
+                )}
+              </p>
+            )}
+          </div>
+        </Collapsible.Panel>
+      </Collapsible.Root>
     </section>
   );
 }

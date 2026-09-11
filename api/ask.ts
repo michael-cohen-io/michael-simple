@@ -27,12 +27,13 @@ import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 
 import { ASK_MODEL, ASK_SYSTEM, MAX_QUESTION_LENGTH, firstQuestion } from "../src/lib/ask.js";
-import { PARTY_TOOL, mergeEffects, validateEffects, type Effects } from "../src/lib/party.js";
+import { PARTY_TOOL, mergeEffects, validateEffects, validateRuns, type Effects } from "../src/lib/party.js";
 import { SITE_URL } from "../src/lib/site.js";
 
 const PER_MINUTE = 5;
 const PER_DAY = 400;
-const DEADLINE_MS = 50_000;
+// Under the function's 120 s (vercel.json): a full-page rewrite is a long tool call.
+const DEADLINE_MS = 110_000;
 
 const recent = new Map<string, number[]>();
 let answeredToday = 0;
@@ -91,6 +92,7 @@ async function askAgent(
   question: string,
   sessionId: string | null,
   active: Effects,
+  runs: string[],
 ): Promise<{ answer: string; sessionId: string | null; effects: Effects[] }> {
   const agentId = process.env.ASK_AGENT_ID!;
   const environmentId = process.env.ASK_ENVIRONMENT_ID!;
@@ -148,10 +150,20 @@ async function askAgent(
               return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id, is_error: true,
                 content: [{ type: "text" as const, text: `Nothing applied: ${checked.error}` }] };
             }
+            if (checked.listText) {
+              // The runs as the browser sent them with this question: what the
+              // visitor sees now, replacements included.
+              const listed = runs.length
+                ? runs.map((run, i) => `${i + 1}. ${run}`).join("\n")
+                : "(the browser sent no text; the page may not be loaded yet)";
+              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id,
+                content: [{ type: "text" as const, text: `${runs.length} text runs on the page now:\n${listed}` }] };
+            }
             effects.push(checked.effects);
             active = mergeEffects(active, checked.effects);
+            const summary = { ...active, replace: active.replace ? `${active.replace.length} pairs` : undefined };
             return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id,
-              content: [{ type: "text" as const, text: `Applied. Active now: ${JSON.stringify(active)}` }] };
+              content: [{ type: "text" as const, text: `Applied. Active now: ${JSON.stringify(summary)}` }] };
           });
           pending = [];
           await client.beta.sessions.events.send(id, { events: results });
@@ -167,7 +179,10 @@ async function askAgent(
     clearTimeout(timer);
   }
   if (parts.length === 0 && effects.length === 0) throw new Error("The agent did not answer in time.");
-  return { answer: parts.join("\n").trim(), sessionId: reusable ? id : null, effects };
+  // Effects that landed before the deadline are worth showing even if the
+  // closing sentence did not arrive.
+  const answer = parts.join("\n").trim() || "Done.";
+  return { answer, sessionId: reusable ? id : null, effects };
 }
 
 /** One Claude API call over the same context, until the agent is provisioned. */
@@ -191,7 +206,7 @@ async function askModel(client: Anthropic, question: string): Promise<string> {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { question?: unknown; sessionId?: unknown; party?: unknown };
+  let body: { question?: unknown; sessionId?: unknown; party?: unknown; runs?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -209,6 +224,10 @@ export async function POST(request: Request): Promise<Response> {
   const checkedParty = body.party === undefined ? { effects: {} } : validateEffects(body.party);
   if ("error" in checkedParty) return problem(400, "Bad Request", `party: ${checkedParty.error}`, "invalid_party");
   const party = checkedParty.effects;
+  // The page's visible text runs, for the tool's list_text step.
+  const checkedRuns = validateRuns(body.runs);
+  if ("error" in checkedRuns) return problem(400, "Bad Request", checkedRuns.error, "invalid_runs");
+  const runs = checkedRuns.runs;
 
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allow(address)) {
@@ -225,13 +244,13 @@ export async function POST(request: Request): Promise<Response> {
     if (useAgent) {
       let result: Awaited<ReturnType<typeof askAgent>>;
       try {
-        result = await askAgent(client, question, sessionId, party);
+        result = await askAgent(client, question, sessionId, party, runs);
       } catch (error) {
         // A remembered session that is gone (deleted, archived) or that no
         // longer takes messages (paused at its budget): start over.
         const stale = error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError;
         if (!sessionId || !stale) throw error;
-        result = await askAgent(client, question, null, party);
+        result = await askAgent(client, question, null, party, runs);
       }
       return json({ ...result, backend: "agent" });
     }

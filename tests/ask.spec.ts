@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { GET, POST } from "../api/ask";
-import { PARTY_TOOL, mergeEffects, validateEffects } from "../src/lib/party";
+import { PARTY_TOOL, mergeEffects, validateEffects, validateRuns } from "../src/lib/party";
 
 // The function is exercised without a network: everything before the
 // Claude call (body validation, the rate limit, the not-configured case).
@@ -61,6 +61,7 @@ test("validates restyle_page input against the catalog and merges turns", () => 
     banner: "  Party  ",
   });
   expect(good).toEqual({
+    listText: false,
     effects: {
       scheme: "party",
       hue: 200,
@@ -79,13 +80,18 @@ test("validates restyle_page input against the catalog and merges turns", () => 
     { motion: { body: "dance" } },
     { motion: { headings: "explode" } },
     { replace: [{ from: "", to: "x" }] },
-    { replace: [{ from: "a", to: "b".repeat(501) }] },
+    { replace: [{ from: "a", to: "b".repeat(1001) }] },
     { banner: "x".repeat(121) },
     { css: "body { display: none }" },
   ]) {
     expect(validateEffects(bad)).toHaveProperty("error");
   }
   expect(PARTY_TOOL.input_schema.properties.scheme.enum).toContain("party");
+  expect(validateEffects({ list_text: true })).toEqual({ effects: {}, listText: true });
+  expect(validateRuns(undefined)).toEqual({ runs: [] });
+  expect(validateRuns([" Work Experience ", "Work Experience", "", "x"])).toEqual({ runs: ["Work Experience", "x"] });
+  expect(validateRuns([1])).toHaveProperty("error");
+  expect(validateRuns(["y".repeat(1001)])).toHaveProperty("error");
 
   const first = { scheme: "party" as const, hue: 200, motion: { headings: "dance" as const }, banner: "Hi" };
   const second = { motion: { links: "spin" as const }, banner: "", replace: [{ from: "a", to: "b" }] };

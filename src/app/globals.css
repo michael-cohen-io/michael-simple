@@ -6,8 +6,9 @@
 
 /*
  * Design tokens. The palette is OKLCH so every tint is a true lightness step
- * of one pink: --primary is set once per theme, --pink-hue is the hue the
- * surfaces share, and the surfaces are literal OKLCH stops down that hue.
+ * of one pink: --pink-hue is the one hue, every pink token is an OKLCH stop
+ * on it (the accent sits a few degrees off it, as an offset, so the default
+ * is the tuned pink and a change of --pink-hue moves the whole palette).
  * `@theme inline` maps the tokens to Tailwind's colour names by reference, so
  * utilities compile to var(--x) directly and a class swap flips every colour.
  */
@@ -66,7 +67,7 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.566 0.228 2);
+    --primary: oklch(0.566 0.228 calc(var(--pink-hue) + 14));
     --primary-foreground: oklch(1 0 0);
     --secondary: oklch(0.94 0.02 var(--pink-hue));
     --secondary-foreground: oklch(0.205 0 0);
@@ -78,7 +79,7 @@
     --destructive-foreground: oklch(0.985 0 0);
     --border: oklch(0.9 0.035 var(--pink-hue));
     --input: oklch(0.9 0.035 var(--pink-hue));
-    --ring: oklch(0.566 0.228 2);
+    --ring: oklch(0.566 0.228 calc(var(--pink-hue) + 14));
     --radius: 0.75rem;
   }
 
@@ -90,8 +91,8 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.183 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.803 0.135 349);
-    --primary-foreground: oklch(0.225 0.044 350);
+    --primary: oklch(0.803 0.135 calc(var(--pink-hue) + 1));
+    --primary-foreground: oklch(0.225 0.044 calc(var(--pink-hue) + 2));
     --secondary: oklch(0.29 0.028 var(--pink-hue));
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.25 0.019 var(--pink-hue));
@@ -102,7 +103,7 @@
     --destructive-foreground: oklch(0.985 0 0);
     --border: oklch(0.365 0.043 var(--pink-hue));
     --input: oklch(0.365 0.043 var(--pink-hue));
-    --ring: oklch(0.803 0.135 349);
+    --ring: oklch(0.803 0.135 calc(var(--pink-hue) + 1));
   }
 }
 
@@ -247,13 +248,6 @@ html[style*="--party-hue"] {
   --pink-hue: var(--party-hue);
 }
 
-[data-party-scheme="light"] {
-  color-scheme: light;
-}
-[data-party-scheme="dark"] {
-  color-scheme: dark;
-}
-
 [data-party-text="lowercase"] :is(header, #main) {
   text-transform: lowercase;
 }
@@ -274,16 +268,29 @@ html[style*="--party-hue"] {
   font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive;
 }
 
+/* The banner takes the top edge; the page and the sticky bar move down by
+   its height so the mark and the switches stay reachable. */
+:root {
+  --party-banner-height: 2rem;
+}
+[data-party-banner] body {
+  padding-top: var(--party-banner-height);
+}
+[data-party-banner] header.sticky {
+  top: var(--party-banner-height);
+}
 .party-banner {
   position: fixed;
   inset-inline: 0;
   top: 0;
   z-index: 50;
+  box-sizing: border-box;
+  height: var(--party-banner-height);
   overflow: hidden;
   background: var(--primary);
   color: var(--primary-foreground);
   font-weight: 600;
-  padding-block: 0.35rem;
+  line-height: var(--party-banner-height);
   white-space: nowrap;
 }
 .party-banner span {
@@ -322,32 +329,32 @@ html[style*="--party-hue"] {
 
   /* Motion per target. `everything` is the page's sections; the ask box
      itself and the fixed layers stay still so the controls are usable. */
-  [data-party-motion-headings="dance"] :is(h1, h2, h3),
-  [data-party-motion-links="dance"] :is(header, #main) a,
+  [data-party-motion-headings="dance"] :is(h1, h2, h3):not([data-party-static] *),
+  [data-party-motion-links="dance"] :is(header, #main) a:not([data-party-static] *),
   [data-party-motion-cards="dance"] .bg-card,
   [data-party-motion-everything="dance"] #main > :not(:has(form)) {
     animation: party-dance 0.9s ease-in-out infinite;
   }
-  [data-party-motion-headings="bounce"] :is(h1, h2, h3),
-  [data-party-motion-links="bounce"] :is(header, #main) a,
+  [data-party-motion-headings="bounce"] :is(h1, h2, h3):not([data-party-static] *),
+  [data-party-motion-links="bounce"] :is(header, #main) a:not([data-party-static] *),
   [data-party-motion-cards="bounce"] .bg-card,
   [data-party-motion-everything="bounce"] #main > :not(:has(form)) {
     animation: party-bounce 0.8s ease-in-out infinite;
   }
-  [data-party-motion-headings="spin"] :is(h1, h2, h3),
-  [data-party-motion-links="spin"] :is(header, #main) a,
+  [data-party-motion-headings="spin"] :is(h1, h2, h3):not([data-party-static] *),
+  [data-party-motion-links="spin"] :is(header, #main) a:not([data-party-static] *),
   [data-party-motion-cards="spin"] .bg-card,
   [data-party-motion-everything="spin"] #main > :not(:has(form)) {
     animation: party-spin 4s linear infinite;
   }
-  [data-party-motion-headings="rainbow"] :is(h1, h2, h3),
-  [data-party-motion-links="rainbow"] :is(header, #main) a,
+  [data-party-motion-headings="rainbow"] :is(h1, h2, h3):not([data-party-static] *),
+  [data-party-motion-links="rainbow"] :is(header, #main) a:not([data-party-static] *),
   [data-party-motion-cards="rainbow"] .bg-card,
   [data-party-motion-everything="rainbow"] #main > :not(:has(form)) {
     animation: party-rainbow 3s linear infinite;
   }
-  [data-party-motion-headings] :is(h1, h2, h3),
-  [data-party-motion-links] a,
+  [data-party-motion-headings] :is(h1, h2, h3):not([data-party-static] *),
+  [data-party-motion-links] a:not([data-party-static] *),
   [data-party-motion-cards] .bg-card,
   [data-party-motion-everything] #main > * {
     display: inline-block;

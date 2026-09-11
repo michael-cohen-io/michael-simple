@@ -6,7 +6,7 @@
   "outputDirectory": "out",
   "functions": {
     "api/ask.ts": {
-      "maxDuration": 60,
+      "maxDuration": 120,
       "includeFiles": "public/index.md"
     }
   },

@@ -1,5 +1,5 @@
 /**
- * What the "Ask about my work" agent is told, shared by the Vercel Function
+ * What the "Ask Claude about me" agent is told, shared by the Vercel Function
  * (api/ask.ts) and the setup script that provisions the Managed Agent
  * (scripts/ask-setup.ts). The page's own Markdown twin is the only source
  * the agent answers from; it is sent with the first question of a session
