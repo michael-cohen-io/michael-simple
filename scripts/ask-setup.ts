@@ -52,9 +52,10 @@ const domains = pageDomains();
 const agentConfig = {
   name: "michaelcohen.io ask",
   description: "Answers visitors' questions about Michael Cohen from his site's own Markdown and the pages it links to.",
-  // Fast mode: a full-page rewrite is thousands of output tokens in one tool
-  // call, and the visitor is waiting.
-  model: { id: ASK_MODEL, effort: "low" as const, speed: "fast" as const },
+  // Not fast mode: the org has no fast-mode capacity ("The API is currently
+  // rate limited" on every request); the function's 120 s covers a full
+  // rewrite at normal speed.
+  model: { id: ASK_MODEL, effort: "low" as const },
   system: ASK_SYSTEM,
   tools: [
     PARTY_TOOL,
