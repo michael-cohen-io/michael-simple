@@ -37,17 +37,15 @@ export default function NotFound() {
         There&apos;s nothing at this address.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button asChild>
-          <Link href="/">Back to the home page</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/#work-heading">Work experience</Link>
+        <Button render={<Link href="/" />}>Back to the home page</Button>
+        <Button variant="outline" render={<Link href="/#work-heading" />}>
+          Work experience
         </Button>
       </div>
       {/* Where to look next, for people and for agents that land here. */}
       <p className="text-sm text-muted-foreground">
         Everything lives on the <Link href="/" className="underline underline-offset-4">home page</Link>.
-        Also: the <a href={RESUME.href} className="underline underline-offset-4">résumé (PDF)</a>,{" "}
+        Also: the <a href={RESUME.href} className="underline underline-offset-4">resume (PDF)</a>,{" "}
         <a href="/sitemap.xml" className="underline underline-offset-4">sitemap.xml</a> and{" "}
         <a href="/llms.txt" className="underline underline-offset-4">llms.txt</a>.
       </p>

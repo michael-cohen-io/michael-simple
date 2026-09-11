@@ -32,7 +32,7 @@ export const PROFILES = [
 export const X_HANDLE = PROFILES[2].handle;
 
 /**
- * The résumé PDF: where it lives and what it saves as. It is generated from
+ * The resume PDF: where it lives and what it saves as. It is generated from
  * src/content on every build (scripts/build-resume.tsx).
  */
 export const RESUME = {

@@ -1,7 +1,7 @@
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
- * Everything on the résumé PDF that is not the work history. The history
+ * Everything on the resume PDF that is not the work history. The history
  * itself comes from ./work.ts, curated by the `resume` fields there, so the
  * PDF (public/MichaelCohenResume.pdf, built by scripts/build-resume.tsx on
  * every `bun run build`) can never drift from the site.
@@ -14,7 +14,8 @@ export type Resume = {
   email: string;
   /** Shown without its scheme; linked with it. */
   site: string;
-  education: { school: string; degree: string; when: string }[];
+  /** `when` is the label on the PDF; `graduated` is the same month as YYYY-MM for resume.json. */
+  education: { school: string; degree: string; when: string; graduated: string }[];
   skills: { label: string; items: string[] }[];
 };
 
@@ -28,6 +29,7 @@ export const resume: Resume = {
       school: "University of Florida",
       degree: "B.S. in Computer Science Engineering",
       when: "December 2017",
+      graduated: "2017-12",
     },
   ],
   skills: [

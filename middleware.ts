@@ -54,6 +54,7 @@ export const KNOWN_PATHS: ReadonlySet<string> = new Set([
   "/index.md",
   "/llms.txt",
   "/openapi.json",
+  "/resume.json",
   RESUME.href,
   // Metadata routes in src/app.
   "/robots.txt",
@@ -122,7 +123,7 @@ function markdown404(pathname: string): Response {
     `- Home: ${RESOURCES.home} (as Markdown: ${RESOURCES.markdown})`,
     `- What this site is for and where things live: ${RESOURCES.llms}`,
     `- Every fetchable resource, as OpenAPI: ${RESOURCES.openapi}`,
-    `- Résumé (one-page PDF): ${RESOURCES.resume}`,
+    `- Resume (PDF): ${RESOURCES.resume}`,
     `- Sitemap: ${RESOURCES.sitemap}`,
     "",
   ].join("\n");

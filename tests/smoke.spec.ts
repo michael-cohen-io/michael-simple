@@ -82,6 +82,49 @@ test("lays the header, content and footer out in one column on a desktop", async
   await expectOneColumn(page);
 });
 
+test("keeps the mark and the switches in reach as the page scrolls", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.mouse.wheel(0, 1200);
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+  const header = await page.locator("header").boundingBox();
+  expect(Math.round(header!.y)).toBe(0);
+  await expect(page.getByRole("button", { name: /theme/i })).toBeInViewport();
+  await expect(page.getByRole("group", { name: "View as" })).toBeInViewport();
+  // The name scrolled away with the page; only the bar stays.
+  await expect(page.locator("h1")).not.toBeInViewport();
+});
+
+test("puts the dates in their own column beside the timeline on a desktop", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const work = page.getByRole("region", { name: "Work Experience" });
+  await expect(work.locator("ol")).toHaveCount(1);
+  const name = await work.getByRole("button", { name: /Anthropic/ }).boundingBox();
+  const date = await work.getByText("Aug 2024 – Present").first().boundingBox();
+  expect(date!.x + date!.width).toBeLessThan(name!.x);
+  expect(Math.abs(date!.y + date!.height / 2 - (name!.y + name!.height / 2))).toBeLessThan(8);
+  // The spine draws on the scroll timeline (Chromium supports it; reduced
+  // motion is off in this browser).
+  const spine = await page.evaluate(async () => {
+    const line = document.querySelector(".timeline-line") as HTMLElement;
+    const dot = document.querySelector(".timeline-dot") as HTMLElement;
+    // animation-timeline is not in the DOM typings yet.
+    const timeline = (el: HTMLElement) => getComputedStyle(el).getPropertyValue("animation-timeline");
+    // Scroll the first dot to the middle of the screen, past the range in
+    // which its line draws, and read the line's transform there.
+    document.querySelector(".timeline-dot-box")!.scrollIntoView({ block: "center" });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return { line: timeline(line), dot: timeline(dot), drawn: getComputedStyle(line).transform };
+  });
+  expect(spine.line).toBe("--timeline-dot");
+  expect(spine.dot).toBe("--timeline-dot");
+  expect(spine.drawn === "none" || spine.drawn.startsWith("matrix(1, 0, 0, 1")).toBe(true);
+  // Closed rows still open, and the first is open already.
+  await expect(work.getByRole("button", { name: /Anthropic/ })).toHaveAttribute("aria-expanded", "true");
+  await work.getByRole("button", { name: /Amazon/ }).click();
+  await expect(work.getByRole("button", { name: /Amazon/ })).toHaveAttribute("aria-expanded", "true");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
@@ -127,6 +170,15 @@ test.describe("on a phone", () => {
     expect(small).toEqual([]);
   });
 
+  test("the work history is one list, with the date under the name", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    const work = page.getByRole("region", { name: "Work Experience" });
+    await expect(work.locator("ol")).toHaveCount(1);
+    const name = await work.getByRole("button", { name: /Anthropic/ }).boundingBox();
+    const date = await work.getByText("Aug 2024 – Present").first().boundingBox();
+    expect(date!.y).toBeGreaterThan(name!.y + name!.height - 1);
+  });
+
   test("the first company is open and a second can open beside it", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
     const work = page.getByRole("region", { name: "Work Experience" });
@@ -151,19 +203,82 @@ test.describe("in a timezone west of UTC", () => {
   });
 });
 
-test("says what I do in one sentence, with the résumé one tap away", async ({ page }) => {
+test("says what I do in one sentence, with the resume one tap away", async ({ page }) => {
   await page.goto("/");
   const hero = page.locator("main p").first();
   await expect(hero).toContainText("Member of Technical Staff at Anthropic");
   await expect(hero).toContainText("Claude Managed Agents");
   await expect(hero).not.toContainText("OpenSea");
   await expect(page.locator("body")).not.toContainText(/updated \w+ \d{4}/i);
-  // One résumé link on the page, in the Work section; no button row in the hero.
-  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: /résumé \(PDF\)/ })).toHaveAttribute(
+  // One resume link on the page, in the Work section; no button row in the hero.
+  await expect(page.getByRole("link", { name: /resume \(PDF\)/ })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: /resume \(PDF\)/ })).toHaveAttribute(
     "href",
     "/MichaelCohenResume.pdf",
   );
+});
+
+test("keeps the accent readable on both grounds and tells the browser the theme", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const contrast = async () =>
+    page.evaluate(() => {
+      const channel = (v: number) => {
+        const c = v / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      // Computed colours come back in whatever space they were written in
+      // (oklch here); a 1×1 canvas resolves any of them to sRGB bytes.
+      const luminance = (color: string) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const link = document.querySelector("main a.text-primary") as HTMLElement;
+      const fg = luminance(getComputedStyle(link).color);
+      const bg = luminance(getComputedStyle(document.body).backgroundColor);
+      return {
+        ratio: (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05),
+        scheme: getComputedStyle(document.documentElement).colorScheme,
+      };
+    });
+  const light = await contrast();
+  expect(light.scheme).toBe("light");
+  expect(light.ratio).toBeGreaterThanOrEqual(4.5);
+
+  await page.getByRole("button", { name: /theme/i }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  // The link colour transitions for 150ms after the switch; poll past it.
+  await expect.poll(async () => (await contrast()).scheme).toBe("dark");
+  await expect.poll(async () => (await contrast()).ratio).toBeGreaterThanOrEqual(4.5);
+});
+
+test("sets the name above the hero on the type scale, with tabular dates", async ({ page }) => {
+  const sizes = async () =>
+    page.evaluate(() => {
+      const px = (el: Element | null) => parseFloat(getComputedStyle(el!).fontSize);
+      return {
+        name: px(document.querySelector("h1")),
+        mark: px(document.querySelector("header a span")),
+        hero: px(document.querySelector("main p")),
+        heading: px(document.querySelector("main h2")),
+        dates: getComputedStyle(document.querySelector("main time")!).fontVariantNumeric,
+      };
+    });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const desktop = await sizes();
+  expect(desktop.name).toBeGreaterThan(desktop.mark);
+  expect(desktop.name).toBeGreaterThan(desktop.hero);
+  expect(desktop.hero).toBeLessThan(desktop.heading);
+  expect(desktop.dates).toContain("tabular-nums");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const phone = await sizes();
+  expect(phone.name).toBeGreaterThan(phone.hero);
+  expect(phone.name).toBeGreaterThanOrEqual(phone.mark);
 });
 
 test("has one h1 and alt text on every image", async ({ page }) => {
@@ -204,7 +319,7 @@ test("embeds Person structured data derived from the content", async ({ page }) 
   );
 });
 
-test("serves the résumé PDF generated from the content files", async ({ request }) => {
+test("serves the resume PDF generated from the content files", async ({ request }) => {
   const response = await request.get("/MichaelCohenResume.pdf");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("pdf");
@@ -221,7 +336,7 @@ test("the 404 page is in the site's chrome with a way back", async ({ page }) =>
   await expect(page).toHaveTitle(/Page not found/);
   await expect(page.getByText("nothing at this address")).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to the home page" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Michael Cohen, home" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Michael Cohen, home" }).first()).toBeVisible();
   await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   await expect(page.locator("main img").first()).toHaveAttribute("src", /memoji\.webp$/);
   // Somewhere to go next, for people and agents alike.
@@ -237,14 +352,17 @@ test("serves llms.txt and the Markdown twin of the home page", async ({ request 
   const llmsText = await llms.text();
   expect(llmsText.startsWith("# Michael Cohen\n")).toBe(true);
   expect(llmsText).toContain("## When to use this site");
-  expect(llmsText).toContain("https://www.michaelcohen.io/index.md");
   expect(llmsText).toContain("https://www.michaelcohen.io/openapi.json");
+  expect(llmsText).toContain("Resume (PDF): https://www.michaelcohen.io/MichaelCohenResume.pdf");
+  expect(llmsText).not.toContain("é");
 
   // Generated from the same content as the page, so the roles and their
   // links are the ones the timeline shows.
+  // One document: what / returns for Accept: text/markdown is llms.txt.
   const md = await request.get("/index.md");
   expect(md.status()).toBe(200);
   const mdText = await md.text();
+  expect(mdText).toBe(llmsText);
   expect(mdText.startsWith("# Michael Cohen\n")).toBe(true);
   expect(mdText).toContain("## Work Experience");
   expect(mdText).toContain("### Anthropic (Aug 2024 – Present)");
@@ -274,7 +392,7 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
   // Every resource it lists exists, and every operation is self-describing.
   const paths = Object.keys(spec.paths);
   expect(paths).toEqual(
-    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/openapi.json"]),
+    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/resume.json", "/openapi.json"]),
   );
   const ids = new Set<string>();
   for (const [route, item] of Object.entries(spec.paths)) {
@@ -294,6 +412,104 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
   await expect(agents).toBeVisible();
   await expect(agents).toHaveAttribute("href", "/llms.txt");
   await expect(page.locator("footer").getByText("openapi.json")).toHaveCount(0);
+});
+
+test("lists writing and talks under the hero, from the content file", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const section = page.getByRole("region", { name: "Writing & Talks" });
+  await expect(section).toBeVisible();
+  const links = section.getByRole("link");
+  expect(await links.count()).toBeGreaterThanOrEqual(3);
+  for (const link of await links.all()) {
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("href", /^https:\/\//);
+  }
+  await expect(section.getByRole("link", { name: /Decoupling the brain from the hands/ })).toBeVisible();
+  // Every row carries a mark saying what it is: an article, or something to watch.
+  expect(await section.locator("li svg").count()).toBe(await section.locator("li").count());
+  // Each row: title, source and month, nothing else; newest first.
+  const rows = section.locator("li");
+  await expect(rows.first()).toContainText("Code with Claude, London · May 2026");
+  expect(await section.locator("li time").count()).toBe(await rows.count());
+  expect(await section.locator("li p").count()).toBe(await rows.count());
+  const months = await section.locator("li time").evaluateAll((els) => els.map((el) => el.getAttribute("datetime")));
+  expect([...months].sort().reverse()).toEqual(months);
+  await expect(section.locator("li svg title").first()).toHaveText(/Talk|Video/);
+  await expect(section.getByRole("link", { name: /Building with MCP and the Claude API/ })).toHaveAttribute(
+    "href",
+    "https://www.youtube.com/watch?v=aZLr962R6Ag",
+  );
+  await expect(section.locator("li").last()).toContainText("Anthropic on YouTube · Oct 2025");
+  await expect(section.locator("li").last().locator("svg title")).toHaveText("Video");
+  expect(await section.locator("li svg title", { hasText: /Talk|Video/ }).count()).toBeGreaterThanOrEqual(1);
+  // The section sits between the work history and Connect.
+  const writing = await section.boundingBox();
+  const work = await page.getByRole("region", { name: "Work Experience" }).boundingBox();
+  const connect = await page.getByRole("region", { name: "Connect" }).boundingBox();
+  expect(writing!.y).toBeGreaterThan(work!.y);
+  expect(connect!.y).toBeGreaterThan(writing!.y);
+  // Connect rows carry a glyph each.
+  expect(await page.getByRole("region", { name: "Connect" }).locator("li svg").count()).toBe(4);
+});
+
+test("serves the resume as a JSON Resume document", async ({ request }) => {
+  const response = await request.get("/resume.json");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("json");
+  const resume = (await response.json()) as {
+    $schema: string;
+    basics: { name: string; email: string; profiles: { network: string; url: string }[] };
+    work: { name: string; position: string; startDate: string; endDate?: string; highlights: string[] }[];
+    education: { institution: string; endDate: string }[];
+    skills: { name: string; keywords: string[] }[];
+    publications: { name: string; url: string }[];
+  };
+  expect(resume.$schema).toContain("jsonresume");
+  expect(resume.basics.name).toBe("Michael Cohen");
+  expect(resume.basics.email).toBe("hello@michaelcohen.io");
+  expect(resume.basics.profiles.map((p) => p.network)).toEqual(["GitHub", "LinkedIn", "X"]);
+  expect(resume.work[0]).toMatchObject({ name: "Anthropic", position: "Member of Technical Staff", startDate: "2024-08" });
+  expect(resume.work[0].endDate).toBeUndefined();
+  expect(resume.work.length).toBeGreaterThanOrEqual(5);
+  for (const role of resume.work) {
+    expect(role.startDate).toMatch(/^\d{4}-\d{2}$/);
+    for (const highlight of role.highlights) expect(highlight).not.toMatch(/\]\(|\*|_/);
+  }
+  expect(resume.education[0]).toMatchObject({ institution: "University of Florida", endDate: "2017-12" });
+  expect(resume.skills.length).toBeGreaterThan(0);
+  expect(resume.publications.map((p) => p.url)).toContain("https://www.anthropic.com/engineering/managed-agents");
+
+  // Listed where agents look for it.
+  expect(await (await request.get("/llms.txt")).text()).toContain("https://www.michaelcohen.io/resume.json");
+  expect(await (await request.get("/index.md")).text()).toContain("## Writing & Talks");
+  const spec = (await (await request.get("/openapi.json")).json()) as { paths: Record<string, unknown> };
+  expect(Object.keys(spec.paths)).toContain("/resume.json");
+});
+
+test("flips the page into the Markdown an agent gets, and back", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const group = page.getByRole("group", { name: "View as" });
+  await expect(group.getByRole("button", { name: "human" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
+
+  await group.getByRole("button", { name: "agent" }).click();
+  const agent = page.getByRole("region", { name: "The page as an agent receives it" });
+  await expect(agent).toBeVisible();
+  await expect(agent).toContainText("curl https://www.michaelcohen.io/llms.txt");
+  const copy = agent.getByRole("button", { name: "Copy the command" });
+  await expect(copy).toBeVisible();
+  await expect(copy).toHaveText("");
+  await expect(agent.locator("pre")).toHaveCount(1);
+  await expect(agent.locator("pre")).toContainText("# Michael Cohen");
+  await expect(agent.locator("pre")).toContainText("## When to use this site");
+  await expect(agent.locator("pre")).toContainText("## Work Experience");
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeHidden();
+  await expect(page.locator("html")).toHaveAttribute("data-view", "agent");
+
+  await group.getByRole("button", { name: "human" }).click();
+  await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
+  await expect(agent).toHaveCount(0);
+  await expect(page.locator("html")).not.toHaveAttribute("data-view", "agent");
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {
