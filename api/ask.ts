@@ -128,6 +128,9 @@ async function askAgent(
       if (event.type === "agent.message") {
         for (const block of event.content) if (block.type === "text") parts.push(block.text);
       } else if (event.type === "agent.custom_tool_use") {
+        // Text said before a tool call is narration ("I'll grab the page's
+        // text first"); the answer is what the agent says after the last one.
+        parts.length = 0;
         pending.push({ id: event.id, name: event.name, input: event.input });
       } else if (event.type === "session.status_terminated") {
         reusable = false;

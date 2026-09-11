@@ -307,11 +307,25 @@ html[style*="--party-hue"] {
 }
 .party-confetti span {
   position: absolute;
-  top: -3vh;
-  width: 0.6rem;
-  height: 0.9rem;
-  border-radius: 0.1rem;
+  top: -4vh;
   opacity: 0;
+  perspective: 200px;
+}
+.party-confetti i {
+  display: block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 0.1rem;
+  background: var(--piece);
+  transform: scale(var(--scale));
+}
+.party-confetti [data-shape="disc"] i {
+  border-radius: 50%;
+}
+.party-confetti [data-shape="ribbon"] i {
+  width: 0.35rem;
+  height: 1.5rem;
+  border-radius: 0.2rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -322,9 +336,12 @@ html[style*="--party-hue"] {
     animation: party-marquee 14s linear infinite;
   }
   .party-confetti span {
-    animation-name: party-fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+    animation:
+      party-fall var(--fall) linear var(--delay) infinite,
+      party-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+  }
+  .party-confetti i {
+    animation: party-tumble var(--tumble) linear var(--delay) infinite;
   }
 
   /* Motion per target. `everything` is the page's sections; the ask box
@@ -373,8 +390,17 @@ html[style*="--party-hue"] {
   to { transform: translateX(-100%); }
 }
 @keyframes party-fall {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(105vh) rotate(720deg); opacity: 0.8; }
+  0% { translate: 0 0; opacity: 1; }
+  90% { opacity: 1; }
+  100% { translate: 0 108vh; opacity: 0; }
+}
+@keyframes party-sway {
+  from { margin-left: calc(-1 * var(--amplitude)); }
+  to { margin-left: var(--amplitude); }
+}
+@keyframes party-tumble {
+  from { transform: scale(var(--scale)) rotateX(0) rotateY(0) rotateZ(0); }
+  to { transform: scale(var(--scale)) rotateX(360deg) rotateY(540deg) rotateZ(180deg); }
 }
 @keyframes party-dance {
   0%, 100% { transform: rotate(-3deg) translateY(0); }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
 import { MAX_RUNS, TARGETS, type Effects } from "@/lib/party";
 
@@ -113,16 +113,30 @@ export function usePartyMode(effects: Effects) {
   }, [effects]);
 }
 
-/** Forty pieces with stable random positions, so a re-render does not reshuffle them. */
-function useConfettiPieces(count = 40) {
+/**
+ * Ninety pieces with stable pseudo-random positions (a re-render must not
+ * reshuffle them): squares, discs and ribbons, each on its own fall, sway
+ * and tumble timing, in the palette's hues plus the odd gold.
+ */
+function useConfettiPieces(count = 90) {
   return useMemo(
     () =>
-      Array.from({ length: count }, (_, i) => ({
-        left: `${(i * 37) % 100}%`,
-        delay: `${((i * 53) % 100) / 40}s`,
-        duration: `${3 + ((i * 29) % 100) / 50}s`,
-        hue: (i * 47) % 360,
-      })),
+      Array.from({ length: count }, (_, i) => {
+        const r = (n: number) => ((i * n) % 97) / 97; // 0..1, stable per piece
+        const shape = i % 5 === 0 ? "ribbon" : i % 3 === 0 ? "disc" : "square";
+        return {
+          shape,
+          left: `${r(37) * 100}%`,
+          delay: `-${(r(53) * 6).toFixed(2)}s`,
+          fall: `${(3.5 + r(29) * 3).toFixed(2)}s`,
+          sway: `${(1.6 + r(41) * 1.6).toFixed(2)}s`,
+          tumble: `${(1.2 + r(17) * 1.8).toFixed(2)}s`,
+          amplitude: `${(18 + r(61) * 50).toFixed(0)}px`,
+          scale: (0.7 + r(23) * 0.8).toFixed(2),
+          hue: i % 7 === 0 ? 85 : (i * 47) % 360,
+          chroma: i % 7 === 0 ? 0.17 : 0.2,
+        };
+      }),
     [count],
   );
 }
@@ -135,15 +149,25 @@ export function PartyLayer({ effects }: { effects: Effects }) {
       {effects.confetti && (
         <div className="party-confetti" aria-hidden="true" data-party-static>
           {pieces.map((piece, i) => (
+            // The outer span falls and sways; the inner one tumbles in 3D.
             <span
               key={i}
-              style={{
-                left: piece.left,
-                animationDelay: piece.delay,
-                animationDuration: piece.duration,
-                background: `oklch(0.75 0.19 ${piece.hue})`,
-              }}
-            />
+              data-shape={piece.shape}
+              style={
+                {
+                  left: piece.left,
+                  "--fall": piece.fall,
+                  "--sway": piece.sway,
+                  "--tumble": piece.tumble,
+                  "--delay": piece.delay,
+                  "--amplitude": piece.amplitude,
+                  "--scale": piece.scale,
+                  "--piece": `oklch(0.78 ${piece.chroma} ${piece.hue})`,
+                } as CSSProperties
+              }
+            >
+              <i />
+            </span>
           ))}
         </div>
       )}
