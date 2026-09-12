@@ -1,9 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
-import { getServerView, getView, setView, subscribe, type View } from "@/lib/view-store";
+import { getServerView, getView, setView, subscribe, viewFromLocation, type View } from "@/lib/view-store";
 
 const OPTIONS: { value: View; label: string; title: string }[] = [
   { value: "human", label: "human", title: "View the page as a person sees it" },
@@ -18,6 +18,13 @@ const OPTIONS: { value: View; label: string; title: string }[] = [
  */
 export default function ViewToggle({ className }: { className?: string }) {
   const view = useSyncExternalStore(subscribe, getView, getServerView);
+
+  // A link to ?view=agent opens the agent view; the server HTML is always
+  // the human one, so this runs after hydration.
+  useEffect(() => {
+    const wanted = viewFromLocation();
+    if (wanted !== getView()) setView(wanted);
+  }, []);
 
   const choose = (next: View) => {
     if (next === view) return;

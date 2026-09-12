@@ -25,6 +25,10 @@ function CopyButton({ text }: { text: string }) {
       }}
       className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
+      {/* Screen readers hear the result; the icon shows it. */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {copied ? "Copied" : ""}
+      </span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -86,7 +90,7 @@ export default function AgentView() {
       className="agent-view flex w-full flex-col gap-4 font-mono text-[13px] leading-relaxed"
     >
       <div className="flex items-center gap-3">
-        <p className="min-w-0 break-all text-muted-foreground">
+        <p translate="no" className="min-w-0 break-all text-muted-foreground">
           <span className="select-none text-primary">$ </span>
           {command}
         </p>
@@ -95,7 +99,9 @@ export default function AgentView() {
       {failed ? (
         <p>Could not load /llms.txt from this host.</p>
       ) : text ? (
-        <pre className="whitespace-pre-wrap break-words rounded-lg bg-muted p-4">{text}</pre>
+        <pre translate="no" className="whitespace-pre-wrap break-words rounded-lg bg-muted p-4">
+          {text}
+        </pre>
       ) : (
         <p className="text-muted-foreground">Fetching…</p>
       )}

@@ -164,7 +164,7 @@ test.describe("on a phone", () => {
         // Hidden controls (the desktop timeline at this width) are 0×0; the
         // skip link is 1×1 until focused, by design.
         .filter(({ box }) => box.width > 0 && box.height > 0)
-        .filter(({ text, box }) => text !== "Skip to content" && (box.width < 24 || box.height < 24))
+        .filter(({ text, box }) => text !== "Skip to Content" && (box.width < 24 || box.height < 24))
         .map(({ text, box }) => `${text} ${Math.round(box.width)}×${Math.round(box.height)}`),
     );
     expect(small).toEqual([]);
@@ -335,7 +335,7 @@ test("the 404 page is in the site's chrome with a way back", async ({ page }) =>
   await page.goto("/404.html", { waitUntil: "networkidle" });
   await expect(page).toHaveTitle(/Page not found/);
   await expect(page.getByText("nothing at this address")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Back to the home page" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Back to the Home Page" })).toHaveAttribute("href", "/");
   await expect(page.getByRole("link", { name: "Michael Cohen, home" }).first()).toBeVisible();
   await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   await expect(page.locator("main img").first()).toHaveAttribute("src", /memoji\.webp$/);
@@ -486,6 +486,18 @@ test("serves the resume as a JSON Resume document", async ({ request }) => {
   expect(Object.keys(spec.paths)).toContain("/resume.json");
 });
 
+test("opens the agent view from ?view=agent, and keeps the URL in step with the switch", async ({ page }) => {
+  await page.goto("/?view=agent", { waitUntil: "networkidle" });
+  await expect(page.getByRole("region", { name: "The page as an agent receives it" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "agent" })).toHaveAttribute("aria-pressed", "true");
+  // The switch runs inside a View Transition, so the URL follows a beat later.
+  await page.getByRole("button", { name: "human" }).click();
+  await expect(page.getByRole("heading", { name: "Work Experience" })).toBeVisible();
+  await expect.poll(() => new URL(page.url()).searchParams.get("view")).toBeNull();
+  await page.getByRole("button", { name: "agent" }).click();
+  await expect.poll(() => new URL(page.url()).searchParams.get("view")).toBe("agent");
+});
+
 test("flips the page into the Markdown an agent gets, and back", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   const group = page.getByRole("group", { name: "View as" });
@@ -553,11 +565,11 @@ test("asks the agent from the box under the hero", async ({ page }) => {
     });
   });
   await page.goto("/", { waitUntil: "networkidle" });
-  const box = page.getByRole("region", { name: "Ask Claude about me" });
+  const box = page.getByRole("region", { name: "Ask Claude About Me" });
   await expect(box).toBeVisible();
   // Folded shut by default; the trigger is the heading.
   await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toBeHidden();
-  await box.getByRole("button", { name: "Ask Claude about me" }).click();
+  await box.getByRole("button", { name: "Ask Claude About Me" }).click();
   await box.getByRole("button", { name: "What did Michael build at Anthropic?" }).click();
   await expect(box.getByRole("status")).toContainText("You asked: What did Michael build at Anthropic?");
   await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
@@ -582,7 +594,7 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   await expect(page.locator(".party-banner")).toContainText("It's a party");
   await expect(page.locator("#work-heading")).toHaveText("Expérience");
   await expect(box.getByRole("button", { name: "Make everything dance" })).toBeVisible();
-  await box.getByRole("button", { name: "Turn it off" }).click();
+  await box.getByRole("button", { name: "Turn It Off" }).click();
   await expect(html).not.toHaveAttribute("data-party-scheme");
   await expect(html).not.toHaveAttribute("data-party-text");
   await expect(page.locator(".party-banner")).toHaveCount(0);

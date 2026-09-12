@@ -70,7 +70,7 @@ function Chevron({ className }: { className?: string }) {
 }
 
 /**
- * "Ask Claude about me": a question box under the hero, folded shut until
+ * "Ask Claude About Me": a question box under the hero, folded shut until
  * the visitor opens it. The answer comes from
  * /api/ask, a Vercel Function that runs a Claude Managed Agent grounded on
  * this page's own Markdown twin (or, until the agent is provisioned, a
@@ -115,13 +115,13 @@ export default function Ask() {
         throw new Error(
           response.status === 404
             ? "Asking is not available on this host; it runs on michaelcohen.io."
-            : `The answer did not come back (${response.status}).`,
+            : `The answer did not come back (${response.status}). Try again in a moment.`,
         );
       }
       const body = (await response.json()) as Answer & Problem;
       if (!response.ok)
         throw new Error(
-          body.detail ?? body.title ?? `Request failed (${response.status}).`,
+          body.detail ?? body.title ?? `The request failed (${response.status}). Try again in a moment.`,
         );
       setSessionId(body.sessionId);
       if (body.effects?.length)
@@ -142,11 +142,17 @@ export default function Ask() {
       className="flex w-full flex-col print:hidden"
       data-party-static
     >
-      <PartyLayer effects={party} />
+      <PartyLayer
+        effects={party}
+        onStop={() => {
+          setParty({});
+          setState({ kind: "idle" });
+        }}
+      />
       <Collapsible.Root defaultOpen={false} className="flex flex-col">
         <h2 id={`${id}-heading`} className="text-base font-semibold">
           <Collapsible.Trigger className="group/ask flex w-full items-center justify-between py-2 text-left outline-hidden transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-            Ask Claude about me
+            Ask Claude About Me
             <Chevron className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none group-data-[panel-open]/ask:rotate-180" />
           </Collapsible.Trigger>
         </h2>
@@ -169,7 +175,8 @@ export default function Ask() {
                 type="text"
                 maxLength={300}
                 autoComplete="off"
-                placeholder="What did Michael build at Anthropic?"
+                enterKeyHint="send"
+                placeholder="Ask a question about Michael…"
                 disabled={state.kind === "asking"}
                 className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
               />
@@ -204,7 +211,7 @@ export default function Ask() {
                 <p className="font-medium text-muted-foreground">
                   {state.question}
                 </p>
-                <p className="whitespace-pre-wrap">{state.answer.answer}</p>
+                <p className="whitespace-pre-wrap break-words">{state.answer.answer}</p>
                 <p className="text-xs text-muted-foreground">
                   {state.answer.backend === "agent"
                     ? "Powered by Claude Managed Agents."
@@ -231,7 +238,7 @@ export default function Ask() {
                     <button
                       key={example}
                       type="button"
-                      className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
+                      className="rounded-sm py-1 underline decoration-border underline-offset-4 outline-hidden transition-colors hover:text-foreground hover:decoration-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => {
                         if (input.current) input.current.value = example;
                         void ask(example);
@@ -240,18 +247,6 @@ export default function Ask() {
                       {example}
                     </button>
                   ))}
-                {isActive(party) && (
-                  <button
-                    type="button"
-                    className="py-1 underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-primary"
-                    onClick={() => {
-                      setParty({});
-                      setState({ kind: "idle" });
-                    }}
-                  >
-                    Turn it off
-                  </button>
-                )}
               </p>
             )}
           </div>

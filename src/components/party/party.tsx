@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 
-import { MAX_RUNS, TARGETS, type Effects } from "@/lib/party";
+import { MAX_RUNS, TARGETS, isActive, type Effects } from "@/lib/party";
 
 /**
  * Applies Party Mode (src/lib/party.ts) to the document: the hue and scheme
@@ -141,11 +141,36 @@ function useConfettiPieces(count = 90) {
   );
 }
 
-/** The confetti and the banner: fixed layers, outside the page's flow. */
-export function PartyLayer({ effects }: { effects: Effects }) {
+/**
+ * The confetti and the banner, fixed layers outside the page's flow, and the
+ * way out: a button that stays on screen while anything is active (motion
+ * that runs on its own needs a stop control the visitor can always reach),
+ * with Escape as its keyboard shortcut.
+ */
+export function PartyLayer({ effects, onStop }: { effects: Effects; onStop: () => void }) {
   const pieces = useConfettiPieces();
+  const active = isActive(effects);
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onStop();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, onStop]);
   return (
     <>
+      {active && (
+        <button
+          type="button"
+          onClick={onStop}
+          title="Stop Party Mode (Esc)"
+          className="party-stop fixed bottom-4 right-4 z-50 rounded-full border border-border bg-background/90 px-4 py-2 text-sm font-medium text-foreground shadow-none outline-hidden backdrop-blur-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          data-party-static
+        >
+          Turn It Off
+        </button>
+      )}
       {effects.confetti && (
         <div className="party-confetti" aria-hidden="true" data-party-static>
           {pieces.map((piece, i) => (
