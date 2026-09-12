@@ -1,18 +1,15 @@
 import type { Company, Entry, Month } from "@/content/types";
 import type { CompanyView, EntryView, MonthRange } from "@/lib/types";
 
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
 const MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
-/** "Aug 2024" from "2024-08". Pure string work: no Date, no timezone. */
+/** "Aug 2024": the month formatted by Intl, pinned to UTC so no timezone can shift it. */
+const monthFormat = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+
 export function monthLabel(month: Month): string {
   const match = MONTH.exec(month);
   if (!match) throw new Error(`Expected a YYYY-MM month, got "${month}"`);
-  return `${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
+  return monthFormat.format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)));
 }
 
 function monthRange(start: Month, end: Month | null): MonthRange {

@@ -12,7 +12,7 @@ export function DateRange({
   return (
     <>
       <time dateTime={startIso}>{startLabel}</time>
-      {" – "}
+      {"\u00a0–\u00a0"}
       {endIso ? <time dateTime={endIso}>{endLabel}</time> : endLabel}
     </>
   );

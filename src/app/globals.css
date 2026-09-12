@@ -117,11 +117,28 @@
   /* Headings break evenly across lines; dates line up digit for digit. */
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     text-wrap: balance;
   }
   time {
     font-variant-numeric: tabular-nums;
+  }
+  /* The header bar sticks to the top, so an anchor jump or a focus scroll
+     leaves this much room above the target instead of hiding it under the bar. */
+  html {
+    scroll-padding-top: 4.5rem;
+  }
+  [id] {
+    scroll-margin-top: 4.5rem;
+  }
+  /* Taps act at once (no double-tap-to-zoom delay), and the tap flash is the
+     accent at low opacity rather than the platform's grey. */
+  a,
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in oklch, var(--primary) 20%, transparent);
   }
 }
 
@@ -286,6 +303,7 @@ html[style*="--party-hue"] {
   z-index: 50;
   box-sizing: border-box;
   height: var(--party-banner-height);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   overflow: hidden;
   background: var(--primary);
   color: var(--primary-foreground);
@@ -396,9 +414,11 @@ html[style*="--party-hue"] {
   90% { opacity: 1; }
   100% { translate: 0 108vh; opacity: 0; }
 }
+/* Sway on transform and fall on translate: two compositor properties that
+   compose, so nothing here forces layout. */
 @keyframes party-sway {
-  from { margin-left: calc(-1 * var(--amplitude)); }
-  to { margin-left: var(--amplitude); }
+  from { transform: translateX(calc(-1 * var(--amplitude))); }
+  to { transform: translateX(var(--amplitude)); }
 }
 @keyframes party-tumble {
   from { transform: scale(var(--scale)) rotateX(0) rotateY(0) rotateZ(0); }

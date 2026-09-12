@@ -234,7 +234,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allow(address)) {
-    return problem(429, "Too Many Requests", "Slow down a little: five questions a minute.", "rate_limited");
+    return problem(429, "Too Many Requests", "Slow down a little: 5 questions a minute. Try again shortly.", "rate_limited");
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {

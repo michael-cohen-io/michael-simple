@@ -75,6 +75,7 @@ export default function Contact() {
                 <ItemTitle className="w-16 text-muted-foreground">{item.name}</ItemTitle>
                 <a
                   href={item.url}
+                  translate="no"
                   className="inline-block py-2 text-sm font-medium text-primary underline decoration-border underline-offset-4 transition-colors hover:decoration-primary"
                   {...(external && { target: "_blank", rel: "noopener noreferrer" })}
                 >

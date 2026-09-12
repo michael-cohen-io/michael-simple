@@ -51,6 +51,7 @@ export default function Writing() {
           <li key={piece.url} className="flex gap-3 py-3 first:pt-1 last:pb-0">
             <KindMark kind={piece.kind} />
             <div className="flex min-w-0 flex-col gap-1">
+              <span className="sr-only">{piece.kind === "article" ? "Article:" : piece.kind === "video" ? "Video:" : "Talk:"}</span>
               <a
                 href={piece.url}
                 target="_blank"

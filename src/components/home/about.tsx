@@ -1,6 +1,10 @@
 /** A name set in the accent, without a link: it is a highlight, not a destination. */
 function Highlight({ children }: { children: string }) {
-  return <span className="font-semibold text-primary">{children}</span>;
+  return (
+    <span translate="no" className="font-semibold text-primary">
+      {children}
+    </span>
+  );
 }
 
 /**
@@ -18,13 +22,17 @@ export default function About() {
       <p className="max-w-prose text-pretty text-xl font-light leading-snug md:leading-relaxed">
         {/* The chip is a word in the sentence: mono, the sentence's own
             weight, a shade of the page behind it. */}
-        <code className="whitespace-nowrap rounded-md bg-muted px-[0.35rem] py-[0.15rem] font-mono text-[0.85em] font-normal">
+        <code
+          translate="no"
+          className="whitespace-nowrap rounded-md bg-muted px-[0.35rem] py-[0.15rem] font-mono text-[0.85em] font-normal"
+        >
           Hello, World!
         </code>{" "}
-        I&apos;m Michael Cohen, a Member of Technical Staff at <Highlight>Anthropic</Highlight>, currently on
+        I’m Michael Cohen, a Member of Technical Staff at <Highlight>Anthropic</Highlight>, currently on
         the Agentic Systems team building{" "}
         <a
           href="https://claude.com/blog/claude-managed-agents"
+          translate="no"
           className="py-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition-colors hover:decoration-primary"
         >
           Claude Managed Agents

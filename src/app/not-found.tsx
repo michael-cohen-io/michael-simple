@@ -34,12 +34,12 @@ export default function NotFound() {
         <code className="rounded-md bg-muted px-[0.3rem] py-[0.2rem] font-mono text-[0.8em] font-semibold">
           404
         </code>{" "}
-        There&apos;s nothing at this address.
+        There’s nothing at this address.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button render={<Link href="/" />}>Back to the home page</Button>
+        <Button render={<Link href="/" />}>Back to the Home Page</Button>
         <Button variant="outline" render={<Link href="/#work-heading" />}>
-          Work experience
+          Work Experience
         </Button>
       </div>
       {/* Where to look next, for people and for agents that land here. */}

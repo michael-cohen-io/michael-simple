@@ -23,7 +23,11 @@ export default function Header() {
           >
             {/* The mark is a visual logo; the link is named by its aria-label.
                 Monospace, semibold and all one pink. */}
-            <span aria-hidden="true" className="font-mono text-2xl font-semibold leading-none text-primary">
+            <span
+              aria-hidden="true"
+              translate="no"
+              className="font-mono text-2xl font-semibold leading-none text-primary transition-opacity hover:opacity-75 motion-reduce:transition-none"
+            >
               {"<mc>"}
             </span>
           </Link>
