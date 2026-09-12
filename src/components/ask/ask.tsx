@@ -25,7 +25,7 @@ type State =
   | { kind: "failed"; question: string; message: string };
 
 const EXAMPLES = [
-  "What did you build at Anthropic?",
+  "What did Michael build at Anthropic?",
   "What is the brain / hands split?",
   "Activate Party Mode",
 ];
@@ -169,7 +169,7 @@ export default function Ask() {
                 type="text"
                 maxLength={300}
                 autoComplete="off"
-                placeholder="What did you build at Anthropic?"
+                placeholder="What did Michael build at Anthropic?"
                 disabled={state.kind === "asking"}
                 className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
               />

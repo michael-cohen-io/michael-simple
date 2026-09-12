@@ -556,18 +556,18 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   const box = page.getByRole("region", { name: "Ask Claude about me" });
   await expect(box).toBeVisible();
   // Folded shut by default; the trigger is the heading.
-  await expect(box.getByRole("button", { name: "What did you build at Anthropic?" })).toBeHidden();
+  await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toBeHidden();
   await box.getByRole("button", { name: "Ask Claude about me" }).click();
-  await box.getByRole("button", { name: "What did you build at Anthropic?" }).click();
-  await expect(box.getByRole("status")).toContainText("You asked: What did you build at Anthropic?");
+  await box.getByRole("button", { name: "What did Michael build at Anthropic?" }).click();
+  await expect(box.getByRole("status")).toContainText("You asked: What did Michael build at Anthropic?");
   await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
   await expect(box.getByRole("button", { name: "What is the brain / hands split?" })).toBeVisible();
-  await expect(box.getByRole("button", { name: "What did you build at Anthropic?" })).toHaveCount(0);
+  await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toHaveCount(0);
 
   await box.getByLabel("Your question").fill("please fail");
   await box.getByRole("button", { name: "Ask Claude", exact: true }).click();
   await expect(box.getByRole("alert")).toContainText("Slow down a little.");
-  expect(questions).toEqual(["What did you build at Anthropic?", "please fail"]);
+  expect(questions).toEqual(["What did Michael build at Anthropic?", "please fail"]);
 
   // Party Mode: the effects land on <html>, the text, the layers; the pills
   // turn into edits; "Turn it off" restores everything without a request.
@@ -588,7 +588,7 @@ test("asks the agent from the box under the hero", async ({ page }) => {
   await expect(page.locator(".party-banner")).toHaveCount(0);
   await expect(page.locator("#work-heading")).toHaveText("Work Experience");
   await expect(box.getByRole("button", { name: "Activate Party Mode" })).toBeVisible();
-  expect(questions).toEqual(["What did you build at Anthropic?", "please fail", "Activate Party Mode"]);
+  expect(questions).toEqual(["What did Michael build at Anthropic?", "please fail", "Activate Party Mode"]);
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {
