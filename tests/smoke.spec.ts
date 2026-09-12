@@ -592,12 +592,20 @@ test("asks the agent from the box under the hero", async ({ page }) => {
       ]),
     });
   });
+  // The box's inside is its own chunk, fetched only when the box is opened.
+  const scripts: string[] = [];
+  page.on("request", (request) => {
+    if (request.resourceType() === "script") scripts.push(request.url());
+  });
   await page.goto("/", { waitUntil: "networkidle" });
   const box = page.getByRole("region", { name: "Ask Claude About Me" });
   await expect(box).toBeVisible();
   // Folded shut by default; the trigger is the heading.
   await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toBeHidden();
+  const loadedBefore = scripts.length;
   await box.getByRole("button", { name: "Ask Claude About Me" }).click();
+  await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toBeVisible();
+  expect(scripts.length, "the panel's chunk loads on first open").toBeGreaterThan(loadedBefore);
   await box.getByRole("button", { name: "What did Michael build at Anthropic?" }).click();
   await expect(box.getByRole("status")).toContainText("You asked: What did Michael build at Anthropic?");
   await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
