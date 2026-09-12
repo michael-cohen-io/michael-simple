@@ -347,31 +347,33 @@ html[style*="--party-hue"] {
   /* Motion per target. `everything` is the page's sections; the ask box
      itself and the fixed layers stay still so the controls are usable. */
   [data-party-motion-headings="dance"] :is(h1, h2, h3):not([data-party-static] *),
-  [data-party-motion-links="dance"] :is(header, #main) a:not([data-party-static] *),
+  [data-party-motion-links="dance"] #main a:not([data-party-static] *),
   [data-party-motion-cards="dance"] .bg-card,
   [data-party-motion-everything="dance"] #main > :not(:has(form)) {
     animation: party-dance 0.9s ease-in-out infinite;
   }
   [data-party-motion-headings="bounce"] :is(h1, h2, h3):not([data-party-static] *),
-  [data-party-motion-links="bounce"] :is(header, #main) a:not([data-party-static] *),
+  [data-party-motion-links="bounce"] #main a:not([data-party-static] *),
   [data-party-motion-cards="bounce"] .bg-card,
   [data-party-motion-everything="bounce"] #main > :not(:has(form)) {
     animation: party-bounce 0.8s ease-in-out infinite;
   }
   [data-party-motion-headings="spin"] :is(h1, h2, h3):not([data-party-static] *),
-  [data-party-motion-links="spin"] :is(header, #main) a:not([data-party-static] *),
+  [data-party-motion-links="spin"] #main a:not([data-party-static] *) {
+    animation: party-rock 2.4s ease-in-out infinite;
+  }
   [data-party-motion-cards="spin"] .bg-card,
   [data-party-motion-everything="spin"] #main > :not(:has(form)) {
-    animation: party-spin 4s linear infinite;
+    animation: party-spin 6s linear infinite;
   }
   [data-party-motion-headings="rainbow"] :is(h1, h2, h3):not([data-party-static] *),
-  [data-party-motion-links="rainbow"] :is(header, #main) a:not([data-party-static] *),
+  [data-party-motion-links="rainbow"] #main a:not([data-party-static] *),
   [data-party-motion-cards="rainbow"] .bg-card,
   [data-party-motion-everything="rainbow"] #main > :not(:has(form)) {
     animation: party-rainbow 3s linear infinite;
   }
   [data-party-motion-headings] :is(h1, h2, h3):not([data-party-static] *),
-  [data-party-motion-links] a:not([data-party-static] *),
+  [data-party-motion-links] #main a:not([data-party-static] *),
   [data-party-motion-cards] .bg-card,
   [data-party-motion-everything] #main > * {
     display: inline-block;
@@ -412,6 +414,10 @@ html[style*="--party-hue"] {
 }
 @keyframes party-spin {
   to { transform: rotate(360deg); }
+}
+@keyframes party-rock {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
 }
 @keyframes party-rainbow {
   to { filter: hue-rotate(360deg); }

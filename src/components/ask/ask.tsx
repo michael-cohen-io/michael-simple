@@ -139,7 +139,7 @@ export default function Ask() {
   return (
     <section
       aria-labelledby={`${id}-heading`}
-      className="flex w-full flex-col"
+      className="flex w-full flex-col print:hidden"
       data-party-static
     >
       <PartyLayer effects={party} />
