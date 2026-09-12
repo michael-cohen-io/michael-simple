@@ -10,19 +10,47 @@ import {
 } from "@/components/party/party";
 import { isActive, mergeEffects, type Effects } from "@/lib/party";
 
-type Answer = {
-  answer: string;
-  sessionId: string | null;
-  backend: "agent" | "messages";
-  effects?: Effects[];
-};
+type Answer = { answer: string; sessionId: string | null; backend: "agent" | "messages" };
 type Problem = { title?: string; detail?: string; code?: string };
+
+/** One server-sent event from /api/ask (src/lib/ask-stream.ts). */
+type Frame =
+  | { type: "delta"; text: string }
+  | { type: "message"; text: string }
+  | { type: "tool"; name: string; listText: boolean }
+  | { type: "effects"; effects: Effects }
+  | { type: "done"; sessionId: string | null; backend: "agent" | "messages" }
+  | ({ type: "error" } & Problem);
 
 type State =
   | { kind: "idle" }
-  | { kind: "asking"; question: string }
+  /** `text` is the answer so far; `note` what the agent is doing instead of writing. */
+  | { kind: "asking"; question: string; text: string; note: string }
   | { kind: "answered"; question: string; answer: Answer }
   | { kind: "failed"; question: string; message: string };
+
+/** Reads a server-sent-events body frame by frame. */
+async function* frames(body: ReadableStream<Uint8Array>): AsyncGenerator<Frame> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    let end: number;
+    while ((end = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      const data = frame
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trim())
+        .join("\n");
+      if (data) yield JSON.parse(data) as Frame;
+    }
+    if (done) return;
+  }
+}
 
 const EXAMPLES = [
   "What did Michael build at Anthropic?",
@@ -78,10 +106,12 @@ function Chevron({ className }: { className?: string }) {
  * the agent's session so it keeps the thread. On a host without the
  * function (a local static build), the box says so.
  *
- * The agent's one tool restyles this page (Party Mode, src/lib/party.ts):
- * the effects come back with the answer, merge into `party`, and
- * usePartyMode applies them; each question carries the active state so
- * the agent knows what it is composing on, and "Turn it off" clears it here.
+ * The answer streams in as server-sent events: text as the model writes it,
+ * and, when the agent's one tool restyles this page (Party Mode,
+ * src/lib/party.ts), each call's effects the moment it lands, merged into
+ * `party` and applied by usePartyMode. Each question carries the active
+ * state so the agent knows what it is composing on, and "Turn It Off"
+ * clears it here.
  */
 export default function Ask() {
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -94,7 +124,7 @@ export default function Ask() {
   const ask = async (question: string) => {
     const trimmed = question.trim();
     if (!trimmed || state.kind === "asking") return;
-    setState({ kind: "asking", question: trimmed });
+    setState({ kind: "asking", question: trimmed, text: "", note: "Asking the agent…" });
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
@@ -111,22 +141,50 @@ export default function Ask() {
         }),
       });
       const type = response.headers.get("content-type") ?? "";
-      if (!type.includes("json")) {
+      if (type.includes("json")) {
+        // A problem document: the request itself was refused.
+        const body = (await response.json()) as Problem;
+        throw new Error(body.detail ?? body.title ?? `The request failed (${response.status}). Try again in a moment.`);
+      }
+      if (!type.includes("text/event-stream") || !response.body) {
         throw new Error(
           response.status === 404
             ? "Asking is not available on this host; it runs on michaelcohen.io."
             : `The answer did not come back (${response.status}). Try again in a moment.`,
         );
       }
-      const body = (await response.json()) as Answer & Problem;
-      if (!response.ok)
-        throw new Error(
-          body.detail ?? body.title ?? `The request failed (${response.status}). Try again in a moment.`,
-        );
-      setSessionId(body.sessionId);
-      if (body.effects?.length)
-        setParty(body.effects.reduce(mergeEffects, party));
-      setState({ kind: "answered", question: trimmed, answer: body });
+      let text = "";
+      let preview = "";
+      const show = (note: string) => setState({ kind: "asking", question: trimmed, text: text || preview, note });
+      for await (const frame of frames(response.body)) {
+        if (frame.type === "delta") {
+          preview += frame.text;
+          show("");
+        } else if (frame.type === "message") {
+          // The complete message replaces its preview.
+          text = frame.text;
+          preview = "";
+          show("");
+        } else if (frame.type === "tool") {
+          // Text said before a tool call was narration; the answer comes after.
+          text = "";
+          preview = "";
+          show(frame.listText ? "Reading the page…" : "Restyling the page…");
+        } else if (frame.type === "effects") {
+          setParty((active) => mergeEffects(active, frame.effects));
+        } else if (frame.type === "error") {
+          throw new Error(frame.detail ?? frame.title ?? "The agent could not answer; try again.");
+        } else if (frame.type === "done") {
+          setSessionId(frame.sessionId);
+          setState({
+            kind: "answered",
+            question: trimmed,
+            answer: { answer: (text || preview).trim() || "Done.", sessionId: frame.sessionId, backend: frame.backend },
+          });
+          return;
+        }
+      }
+      throw new Error("The answer stopped early. Try again in a moment.");
     } catch (error) {
       setState({
         kind: "failed",
@@ -198,10 +256,21 @@ export default function Ask() {
                 />
               </button>
             </form>
-            {state.kind === "asking" && (
+            {state.kind === "asking" && !state.text && (
               <p className="text-sm text-muted-foreground" role="status">
-                Asking the agent…
+                {state.note || "Writing…"}
               </p>
+            )}
+            {state.kind === "asking" && state.text && (
+              <div className="flex flex-col gap-2 rounded-lg bg-muted p-4 text-sm" role="status" aria-live="polite">
+                <p className="font-medium text-muted-foreground">{state.question}</p>
+                <p className="whitespace-pre-wrap break-words">
+                  {state.text}
+                  <span aria-hidden="true" className="ml-0.5 inline-block w-2 animate-pulse text-primary motion-reduce:animate-none">
+                    ▍
+                  </span>
+                </p>
+              </div>
             )}
             {state.kind === "answered" && (
               <div

@@ -1,19 +1,16 @@
-// POST /api/ask: the "Ask about my work" box (src/components/ask/ask.tsx).
+// POST /api/ask: the "Ask Claude About Me" box (src/components/ask/ask.tsx).
 // A Vercel Function, the one piece of server code on the site. It answers
 // from the page's Markdown twin, through a Claude Managed Agent when one is
 // provisioned (ASK_AGENT_ID and ASK_ENVIRONMENT_ID; see scripts/ask-setup.ts)
-// and otherwise through a single Claude API call over the same text. Every
-// error is an RFC 9457 problem document, like the middleware's 404.
+// and otherwise through a single Claude API call over the same text.
 //
-// The agent turn follows the Managed Agents client patterns: one session per
-// visitor thread (its id, `sesn_…`, goes back to the browser and returns with
-// the next question), the event stream opened before the message is sent, and
-// the turn read as finished on `session.status_idle` only when its stop reason
-// asks nothing of the client, or on `session.status_terminated`. When it asks
-// something (`requires_action`), it is the agent's one custom tool,
-// `restyle_page` (Party Mode, src/lib/party.ts): the input is validated here,
-// the agent gets a `user.custom_tool_result` saying what is active, and the
-// effects ride back to the browser with the answer, which applies them.
+// The answer streams: the response is `text/event-stream`, one server-sent
+// event per step (src/lib/ask-stream.ts lists them): `delta` as the model
+// writes, `message` for each finished message, `tool` and `effects` as the
+// agent restyles the page (Party Mode), `done` with the session to continue
+// on, or `error` with an RFC 9457 problem document. Anything wrong with the
+// request itself (body, limits, configuration) is a problem document with
+// its own status, before any stream starts, like the middleware's 404.
 //
 // Limits: questions are capped at 300 characters; each function instance
 // allows 5 questions a minute per address and 400 a day in total, and a
@@ -26,8 +23,9 @@ import path from "node:path";
 
 import Anthropic from "@anthropic-ai/sdk";
 
-import { ASK_MODEL, ASK_SYSTEM, MAX_QUESTION_LENGTH, firstQuestion } from "../src/lib/ask.js";
-import { PARTY_TOOL, mergeEffects, validateEffects, validateRuns, type Effects } from "../src/lib/party.js";
+import { askAgent, askModel, type AskEvent } from "../src/lib/ask-stream.js";
+import { MAX_QUESTION_LENGTH } from "../src/lib/ask.js";
+import { validateEffects, validateRuns } from "../src/lib/party.js";
 import { SITE_URL } from "../src/lib/site.js";
 
 const PER_MINUTE = 5;
@@ -39,17 +37,16 @@ const recent = new Map<string, number[]>();
 let answeredToday = 0;
 let day = new Date().toISOString().slice(0, 10);
 
-function problem(status: number, title: string, detail: string, code: string): Response {
-  return new Response(JSON.stringify({ type: "about:blank", title, status, detail, code }), {
-    status,
-    headers: { "content-type": "application/problem+json", "cache-control": "no-store" },
-  });
+type ProblemBody = { type: "about:blank"; title: string; status: number; detail: string; code: string };
+
+function problemBody(status: number, title: string, detail: string, code: string): ProblemBody {
+  return { type: "about:blank", title, status, detail, code };
 }
 
-function json(body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+function problem(status: number, title: string, detail: string, code: string): Response {
+  return new Response(JSON.stringify(problemBody(status, title, detail, code)), {
+    status,
+    headers: { "content-type": "application/problem+json", "cache-control": "no-store" },
   });
 }
 
@@ -81,131 +78,45 @@ async function context(): Promise<string> {
   }
 }
 
-/** The session's trace in the Console; `default` assumes the key's workspace. */
-function consoleUrl(sessionId: string): string {
-  return `https://platform.claude.com/workspaces/${process.env.ASK_WORKSPACE ?? "default"}/sessions/${sessionId}`;
+/** The problem document for a failure after the stream has started. */
+function upstreamProblem(error: unknown): ProblemBody {
+  if (error instanceof Anthropic.RateLimitError) {
+    return problemBody(503, "Busy", "The agent is busy; try again in a moment.", "upstream_rate_limited");
+  }
+  const detail = error instanceof Error ? error.message : "Unknown error";
+  console.error(JSON.stringify({ event: "ask_failed", detail }));
+  return problemBody(502, "No Answer", "The agent could not answer; try again.", "upstream_failed");
 }
 
-/** One turn of a Managed Agents session; a new session when none is given. */
-async function askAgent(
-  client: Anthropic,
-  question: string,
-  sessionId: string | null,
-  active: Effects,
-  runs: string[],
-): Promise<{ answer: string; sessionId: string | null; effects: Effects[] }> {
-  const agentId = process.env.ASK_AGENT_ID!;
-  const environmentId = process.env.ASK_ENVIRONMENT_ID!;
-  let id = sessionId;
-  let text = question;
-  if (!id) {
-    const session = await client.beta.sessions.create({
-      agent: agentId,
-      environment_id: environmentId,
-      title: "michaelcohen.io: ask",
-      // One dollar per session, in cents: a hard cap the platform enforces.
-      budget: { type: "limit", max_list_cost: { amount: "100", currency: "USD" } },
-    });
-    id = session.id;
-    text = firstQuestion(await context(), question);
-    console.log(JSON.stringify({ event: "ask_session", sessionId: id, console: consoleUrl(id) }));
-  }
-
-  // Stream first, then send: the stream buffers from the moment it opens,
-  // so nothing the agent emits after the message lands is missed.
-  const stream = await client.beta.sessions.events.stream(id);
-  await client.beta.sessions.events.send(id, {
-    events: [{ type: "user.message", content: [{ type: "text", text }] }],
-  });
-
-  const parts: string[] = [];
-  const effects: Effects[] = [];
-  let pending: { id: string; name: string; input: unknown }[] = [];
-  let reusable = true;
-  const timer = setTimeout(() => stream.controller.abort(), DEADLINE_MS);
-  try {
-    for await (const event of stream) {
-      if (event.type === "agent.message") {
-        for (const block of event.content) if (block.type === "text") parts.push(block.text);
-      } else if (event.type === "agent.custom_tool_use") {
-        // Text said before a tool call is narration ("I'll grab the page's
-        // text first"); the answer is what the agent says after the last one.
-        parts.length = 0;
-        pending.push({ id: event.id, name: event.name, input: event.input });
-      } else if (event.type === "session.status_terminated") {
-        reusable = false;
-        break;
-      } else if (event.type === "session.status_idle") {
-        // Idle is the end of the turn unless the agent is waiting on this
-        // client, which means a custom tool call to answer; the session
-        // resumes on the same stream once the results are sent. A session
-        // that hit its budget or ran out of retries is done: the next
-        // question starts a fresh one.
-        if (event.stop_reason.type === "requires_action") {
-          if (pending.length === 0) break;
-          const results = pending.map((call) => {
-            if (call.name !== PARTY_TOOL.name) {
-              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id, is_error: true,
-                content: [{ type: "text" as const, text: `Unknown tool ${call.name}.` }] };
-            }
-            const checked = validateEffects(call.input);
-            if ("error" in checked) {
-              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id, is_error: true,
-                content: [{ type: "text" as const, text: `Nothing applied: ${checked.error}` }] };
-            }
-            if (checked.listText) {
-              // The runs as the browser sent them with this question: what the
-              // visitor sees now, replacements included.
-              const listed = runs.length
-                ? runs.map((run, i) => `${i + 1}. ${run}`).join("\n")
-                : "(the browser sent no text; the page may not be loaded yet)";
-              return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id,
-                content: [{ type: "text" as const, text: `${runs.length} text runs on the page now:\n${listed}` }] };
-            }
-            effects.push(checked.effects);
-            active = mergeEffects(active, checked.effects);
-            const summary = { ...active, replace: active.replace ? `${active.replace.length} pairs` : undefined };
-            return { type: "user.custom_tool_result" as const, custom_tool_use_id: call.id,
-              content: [{ type: "text" as const, text: `Applied. Active now: ${JSON.stringify(summary)}` }] };
-          });
-          pending = [];
-          await client.beta.sessions.events.send(id, { events: results });
-          continue;
-        }
-        if (event.stop_reason.type !== "end_turn") reusable = false;
-        break;
-      } else if (event.type === "session.error") {
-        throw new Error(event.error.message);
+/** The events as a server-sent-events body: `event: <type>` then the JSON. */
+function sse(events: AsyncGenerator<AskEvent>): Response {
+  const encoder = new TextEncoder();
+  const frame = (type: string, data: unknown) => encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { value, done } = await events.next();
+        if (done) return controller.close();
+        controller.enqueue(frame(value.type, value));
+        if (value.type === "done") controller.close();
+      } catch (error) {
+        controller.enqueue(frame("error", upstreamProblem(error)));
+        controller.close();
       }
-    }
-  } finally {
-    clearTimeout(timer);
-  }
-  if (parts.length === 0 && effects.length === 0) throw new Error("The agent did not answer in time.");
-  // Effects that landed before the deadline are worth showing even if the
-  // closing sentence did not arrive.
-  const answer = parts.join("\n").trim() || "Done.";
-  return { answer, sessionId: reusable ? id : null, effects };
-}
-
-/** One Claude API call over the same context, until the agent is provisioned. */
-async function askModel(client: Anthropic, question: string): Promise<string> {
-  const response = await client.messages.create({
-    model: ASK_MODEL,
-    max_tokens: 600,
-    output_config: { effort: "low" },
-    system: [
-      { type: "text", text: ASK_SYSTEM },
-      { type: "text", text: `<context>\n${await context()}\n</context>`, cache_control: { type: "ephemeral" } },
-    ],
-    messages: [{ role: "user", content: question }],
+    },
+    cancel() {
+      // The browser went away: stop the turn's stream rather than run it out.
+      void events.return(undefined);
+    },
   });
-  if (response.stop_reason === "refusal") throw new Error("The model declined to answer that.");
-  return response.content
-    .filter((block): block is Anthropic.TextBlock => block.type === "text")
-    .map((block) => block.text)
-    .join("\n")
-    .trim();
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-store",
+      "x-accel-buffering": "no",
+    },
+  });
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -241,31 +152,42 @@ export async function POST(request: Request): Promise<Response> {
     return problem(503, "Not Configured", "Asking is not set up on this deployment yet.", "not_configured");
   }
   const client = new Anthropic({ timeout: DEADLINE_MS, maxRetries: 1 });
-  const useAgent = Boolean(process.env.ASK_AGENT_ID && process.env.ASK_ENVIRONMENT_ID);
+  const agentId = process.env.ASK_AGENT_ID;
+  const environmentId = process.env.ASK_ENVIRONMENT_ID;
+  if (!agentId || !environmentId) return sse(askModel(client, question, context));
 
-  try {
-    if (useAgent) {
-      let result: Awaited<ReturnType<typeof askAgent>>;
-      try {
-        result = await askAgent(client, question, sessionId, party, runs);
-      } catch (error) {
-        // A remembered session that is gone (deleted, archived) or that no
-        // longer takes messages (paused at its budget): start over.
-        const stale = error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError;
-        if (!sessionId || !stale) throw error;
-        result = await askAgent(client, question, null, party, runs);
+  const turn = (id: string | null) =>
+    askAgent(client, {
+      question,
+      sessionId: id,
+      active: party,
+      runs,
+      context,
+      agentId,
+      environmentId,
+      deadlineMs: DEADLINE_MS,
+      workspace: process.env.ASK_WORKSPACE,
+      onSession: (created, url) => console.log(JSON.stringify({ event: "ask_session", sessionId: created, console: url })),
+    });
+
+  // A remembered session that is gone (deleted, archived) or that no longer
+  // takes messages (paused at its budget) fails before its first event; the
+  // turn then starts over on a fresh session.
+  async function* resilient(): AsyncGenerator<AskEvent> {
+    const first = turn(sessionId);
+    let started = false;
+    try {
+      for await (const event of first) {
+        started = true;
+        yield event;
       }
-      return json({ ...result, backend: "agent" });
+    } catch (error) {
+      const stale = error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError;
+      if (!sessionId || started || !stale) throw error;
+      yield* turn(null);
     }
-    return json({ answer: await askModel(client, question), sessionId: null, effects: [], backend: "messages" });
-  } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) {
-      return problem(503, "Busy", "The agent is busy; try again in a moment.", "upstream_rate_limited");
-    }
-    const detail = error instanceof Error ? error.message : "Unknown error";
-    console.error(JSON.stringify({ event: "ask_failed", detail }));
-    return problem(502, "No Answer", "The agent could not answer; try again.", "upstream_failed");
   }
+  return sse(resilient());
 }
 
 export function GET(): Response {

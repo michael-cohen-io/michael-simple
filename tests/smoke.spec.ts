@@ -527,6 +527,10 @@ test("flips the page into the Markdown an agent gets, and back", async ({ page }
 test("asks the agent from the box under the hero", async ({ page }) => {
   // The function only exists on Vercel; here the route is answered in-page.
   const questions: string[] = [];
+  // The mock answers the way the function does: server-sent events, text in
+  // pieces, then the effects of a tool call, then `done`.
+  const sse = (frames: object[]) =>
+    frames.map((frame) => `event: ${(frame as { type: string }).type}\ndata: ${JSON.stringify(frame)}\n\n`).join("");
   await page.route("/api/ask", async (route) => {
     const body = route.request().postDataJSON() as { question: string; sessionId: string | null; party: unknown; runs: string[] };
     questions.push(body.question);
@@ -534,19 +538,21 @@ test("asks the agent from the box under the hero", async ({ page }) => {
     expect(body.runs).toContain("Work Experience");
     expect(body.runs.length).toBeGreaterThan(20);
     if (body.question === "Activate Party Mode") {
-      // The agent called restyle_page; the function validated it and passes it on.
+      // The agent called restyle_page twice; the function validated both and passed them on.
       await route.fulfill({
         status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          answer: "Party on.",
-          sessionId: "sesn_test",
-          backend: "agent",
-          effects: [
-            { scheme: "party", hue: 200, confetti: true, motion: { headings: "dance" }, banner: "It's a party" },
-            { text: "lowercase", replace: [{ from: "Work Experience", to: "Expérience" }] },
-          ],
-        }),
+        contentType: "text/event-stream",
+        body: sse([
+          { type: "message", text: "One moment." },
+          { type: "tool", name: "restyle_page", listText: false },
+          { type: "effects", effects: { scheme: "party", hue: 200, confetti: true, motion: { headings: "dance" }, banner: "It's a party" } },
+          { type: "tool", name: "restyle_page", listText: false },
+          { type: "effects", effects: { text: "lowercase", replace: [{ from: "Work Experience", to: "Expérience" }] } },
+          { type: "delta", text: "Party " },
+          { type: "delta", text: "on." },
+          { type: "message", text: "Party on." },
+          { type: "done", sessionId: "sesn_test", backend: "agent" },
+        ]),
       });
       return;
     }
@@ -560,8 +566,13 @@ test("asks the agent from the box under the hero", async ({ page }) => {
     }
     await route.fulfill({
       status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ answer: `You asked: ${body.question}`, sessionId: "sesn_test", backend: "agent" }),
+      contentType: "text/event-stream",
+      body: sse([
+        { type: "delta", text: "You asked: " },
+        { type: "delta", text: body.question },
+        { type: "message", text: `You asked: ${body.question}` },
+        { type: "done", sessionId: "sesn_test", backend: "agent" },
+      ]),
     });
   });
   await page.goto("/", { waitUntil: "networkidle" });
