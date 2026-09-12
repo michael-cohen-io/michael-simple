@@ -150,8 +150,8 @@ export default function Ask() {
             <Chevron className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none group-data-[panel-open]/ask:rotate-180" />
           </Collapsible.Trigger>
         </h2>
-        <Collapsible.Panel className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
-          <div className="flex flex-col gap-3 pt-1 pb-1">
+        <Collapsible.Panel className="-mx-1 h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
+          <div className="flex flex-col gap-3 p-1">
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -220,8 +220,8 @@ export default function Ask() {
             {/* The suggestions stay under the answer, so a thread can keep going
           with one click; the one just asked steps aside. */}
             {state.kind !== "asking" && (
-              <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
+              <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="py-1">{state.kind === "idle" ? "Try:" : "Ask next:"}</span>
                 {(isActive(party) ? PARTY_EXAMPLES : EXAMPLES)
                   .filter(
                     (example) =>
