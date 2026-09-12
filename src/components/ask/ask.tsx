@@ -153,7 +153,7 @@ export default function Ask() {
         <Collapsible.Panel className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
           <div className="flex flex-col gap-3 pt-1 pb-1">
             <form
-              className="flex flex-col gap-2 sm:flex-row"
+              className="flex gap-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 void ask(input.current?.value ?? "");
@@ -180,7 +180,7 @@ export default function Ask() {
                   state.kind === "asking" ? "Asking Claude…" : "Ask Claude"
                 }
                 title="Ask Claude"
-                className="flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-md bg-primary text-primary-foreground outline-hidden transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60 sm:self-auto"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground outline-hidden transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
               >
                 <ClaudeMark
                   className={
