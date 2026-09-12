@@ -264,7 +264,7 @@ test("sets the name above the hero on the type scale, with tabular dates", async
         name: px(document.querySelector("h1")),
         mark: px(document.querySelector("header a span")),
         hero: px(document.querySelector("main p")),
-        heading: px(document.querySelector("main h2")),
+        heading: px(document.getElementById("work-heading")),
         dates: getComputedStyle(document.querySelector("main time")!).fontVariantNumeric,
       };
     });
@@ -510,6 +510,85 @@ test("flips the page into the Markdown an agent gets, and back", async ({ page }
   await expect(page.getByRole("region", { name: "Work Experience" })).toBeVisible();
   await expect(agent).toHaveCount(0);
   await expect(page.locator("html")).not.toHaveAttribute("data-view", "agent");
+});
+
+test("asks the agent from the box under the hero", async ({ page }) => {
+  // The function only exists on Vercel; here the route is answered in-page.
+  const questions: string[] = [];
+  await page.route("/api/ask", async (route) => {
+    const body = route.request().postDataJSON() as { question: string; sessionId: string | null; party: unknown; runs: string[] };
+    questions.push(body.question);
+    // Every question carries the page's visible text runs, for the tool's list_text step.
+    expect(body.runs).toContain("Work Experience");
+    expect(body.runs.length).toBeGreaterThan(20);
+    if (body.question === "Activate Party Mode") {
+      // The agent called restyle_page; the function validated it and passes it on.
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: "Party on.",
+          sessionId: "sesn_test",
+          backend: "agent",
+          effects: [
+            { scheme: "party", hue: 200, confetti: true, motion: { headings: "dance" }, banner: "It's a party" },
+            { text: "lowercase", replace: [{ from: "Work Experience", to: "Expérience" }] },
+          ],
+        }),
+      });
+      return;
+    }
+    if (body.question.includes("fail")) {
+      await route.fulfill({
+        status: 429,
+        contentType: "application/problem+json",
+        body: JSON.stringify({ title: "Too Many Requests", detail: "Slow down a little.", code: "rate_limited" }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ answer: `You asked: ${body.question}`, sessionId: "sesn_test", backend: "agent" }),
+    });
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const box = page.getByRole("region", { name: "Ask Claude about me" });
+  await expect(box).toBeVisible();
+  // Folded shut by default; the trigger is the heading.
+  await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toBeHidden();
+  await box.getByRole("button", { name: "Ask Claude about me" }).click();
+  await box.getByRole("button", { name: "What did Michael build at Anthropic?" }).click();
+  await expect(box.getByRole("status")).toContainText("You asked: What did Michael build at Anthropic?");
+  await expect(box.getByRole("status")).toContainText("Powered by Claude Managed Agents.");
+  await expect(box.getByRole("button", { name: "What is the brain / hands split?" })).toBeVisible();
+  await expect(box.getByRole("button", { name: "What did Michael build at Anthropic?" })).toHaveCount(0);
+
+  await box.getByLabel("Your question").fill("please fail");
+  await box.getByRole("button", { name: "Ask Claude", exact: true }).click();
+  await expect(box.getByRole("alert")).toContainText("Slow down a little.");
+  expect(questions).toEqual(["What did Michael build at Anthropic?", "please fail"]);
+
+  // Party Mode: the effects land on <html>, the text, the layers; the pills
+  // turn into edits; "Turn it off" restores everything without a request.
+  const html = page.locator("html");
+  await box.getByRole("button", { name: "Activate Party Mode" }).click();
+  await expect(box.getByRole("status").last()).toContainText("Party on.");
+  await expect(html).toHaveAttribute("data-party-scheme", "party");
+  await expect(html).toHaveAttribute("data-party-motion-headings", "dance");
+  await expect(html).toHaveAttribute("data-party-text", "lowercase");
+  expect(await html.evaluate((el) => el.style.getPropertyValue("--party-hue"))).toBe("200");
+  await expect(page.locator(".party-confetti")).toBeAttached();
+  await expect(page.locator(".party-banner")).toContainText("It's a party");
+  await expect(page.locator("#work-heading")).toHaveText("Expérience");
+  await expect(box.getByRole("button", { name: "Make everything dance" })).toBeVisible();
+  await box.getByRole("button", { name: "Turn it off" }).click();
+  await expect(html).not.toHaveAttribute("data-party-scheme");
+  await expect(html).not.toHaveAttribute("data-party-text");
+  await expect(page.locator(".party-banner")).toHaveCount(0);
+  await expect(page.locator("#work-heading")).toHaveText("Work Experience");
+  await expect(box.getByRole("button", { name: "Activate Party Mode" })).toBeVisible();
+  expect(questions).toEqual(["What did Michael build at Anthropic?", "please fail", "Activate Party Mode"]);
 });
 
 test("serves the crawler and sharing files", async ({ request }) => {

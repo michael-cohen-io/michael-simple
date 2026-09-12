@@ -44,6 +44,12 @@ export function looksLikeApi(pathname: string): boolean {
   return /^\/(api|graphql|v\d+)(\/|$)/.test(pathname);
 }
 
+/**
+ * Paths answered by Vercel Functions in api/, not files in out/: passed
+ * through untouched, and left out of the build-time path check.
+ */
+export const FUNCTION_PATHS: ReadonlySet<string> = new Set(["/api/ask"]);
+
 export const KNOWN_PATHS: ReadonlySet<string> = new Set([
   // The page, its RSC payload and the 404 page.
   "/",
@@ -173,7 +179,7 @@ export default function middleware(request: Request): Response {
   }
 
   // Published files and Next's own payload files are the filesystem's to answer.
-  if (KNOWN_PATHS.has(pathname) || isNextInternal(pathname)) return next();
+  if (KNOWN_PATHS.has(pathname) || FUNCTION_PATHS.has(pathname) || isNextInternal(pathname)) return next();
 
   const offers: readonly Offer[] = looksLikeApi(pathname)
     ? ["application/problem+json", "text/markdown", "text/html"]
