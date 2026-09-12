@@ -17,7 +17,7 @@ function KindMark({ kind }: { kind: Piece["kind"] }) {
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     "aria-hidden": true,
-    className: "mt-1 size-4 shrink-0 text-muted-foreground",
+    className: "size-4 text-muted-foreground",
   };
   if (kind === "article") {
     return (
@@ -49,7 +49,11 @@ export default function Writing() {
       <ul className="divide-y">
         {pieces.map((piece) => (
           <li key={piece.url} className="flex gap-3 py-3 first:pt-1 last:pb-0">
-            <KindMark kind={piece.kind} />
+            {/* The mark is centred on the title's first line: the link's
+                own padding plus one line of text is 2rem tall, so is this box. */}
+            <span className="flex h-8 shrink-0 items-center">
+              <KindMark kind={piece.kind} />
+            </span>
             <div className="flex min-w-0 flex-col gap-1">
               <span className="sr-only">{piece.kind === "article" ? "Article:" : piece.kind === "video" ? "Video:" : "Talk:"}</span>
               <a
