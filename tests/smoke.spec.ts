@@ -378,8 +378,8 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
     openapi: string;
     info: { title: string; contact?: { email?: string } };
     servers: { url: string }[];
-    paths: Record<string, { get?: { operationId?: string; description?: string; tags?: string[] } }>;
-    components?: { schemas?: { Problem?: { required?: string[] } } };
+    paths: Record<string, Record<string, { operationId?: string; description?: string; tags?: string[]; requestBody?: unknown; responses?: Record<string, unknown> }>>;
+    components?: { schemas?: { Problem?: { required?: string[] }; AskRequest?: { required?: string[] }; AskProblem?: { properties?: { code?: { enum?: string[] } } } } };
   };
   expect(spec.openapi).toMatch(/^3\.1\./);
   expect(spec.info.title).toContain("Michael Cohen");
@@ -389,19 +389,36 @@ test("describes its fetchable resources in an OpenAPI document", async ({ page, 
     expect.arrayContaining(["status", "code", "hint", "resources"]),
   );
 
-  // Every resource it lists exists, and every operation is self-describing.
+  // Every file it lists exists, and every operation is self-describing. The
+  // one endpoint (POST /api/ask) is a function, so the static export cannot
+  // answer it here; its description is checked for shape instead.
   const paths = Object.keys(spec.paths);
   expect(paths).toEqual(
-    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/resume.json", "/openapi.json"]),
+    expect.arrayContaining(["/", "/index.md", "/llms.txt", "/MichaelCohenResume.pdf", "/sitemap.xml", "/resume.json", "/openapi.json", "/api/ask"]),
   );
   const ids = new Set<string>();
   for (const [route, item] of Object.entries(spec.paths)) {
-    expect(item.get?.operationId, route).toMatch(/^[a-zA-Z]+$/);
-    expect(item.get?.description?.length ?? 0, route).toBeGreaterThan(40);
-    ids.add(item.get?.operationId ?? "");
-    expect((await request.get(route)).status(), route).toBe(200);
+    for (const [method, operation] of Object.entries(item)) {
+      expect(operation.operationId, `${method} ${route}`).toMatch(/^[a-zA-Z]+$/);
+      expect(operation.description?.length ?? 0, `${method} ${route}`).toBeGreaterThan(40);
+      ids.add(operation.operationId ?? "");
+    }
+    if (item.get) expect((await request.get(route)).status(), route).toBe(200);
   }
   expect(ids.size).toBe(paths.length);
+  const ask = spec.paths["/api/ask"].post;
+  expect(ask.requestBody).toBeDefined();
+  expect(Object.keys(ask.responses ?? {})).toEqual(expect.arrayContaining(["200", "400", "405", "429", "503"]));
+  expect(spec.components?.schemas?.AskRequest?.required).toEqual(["question"]);
+  expect(spec.components?.schemas?.AskProblem?.properties?.code?.enum).toEqual(
+    expect.arrayContaining(["rate_limited", "not_configured", "upstream_failed"]),
+  );
+
+  // llms.txt tells an agent how to ask, in the same terms.
+  const llms = await (await request.get("/llms.txt")).text();
+  expect(llms).toContain("## Asking a question");
+  expect(llms).toContain("POST https://www.michaelcohen.io/api/ask");
+  expect(llms).toContain("server-sent events");
 
   // The home page points at the document and at its Markdown twin, and the
   // footer shows people (and agents reading the page) where llms.txt is.
