@@ -7,9 +7,11 @@
 //                       when to use the site, where things live) then the page
 //   public/resume.json  the resume in the JSON Resume schema (jsonresume.org),
 //                       the same work history as typed JSON
-//   public/openapi.json an OpenAPI 3.1 description of the site's read-only
-//                       resources (the files above, the PDF, the sitemap), so a
-//                       tool-using agent can fetch them without guessing URLs
+//   public/openapi.json an OpenAPI 3.1 description of the site's resources
+//                       (the files above, the PDF, the sitemap) and of the one
+//                       endpoint, POST /api/ask, so a tool-using agent can use
+//                       them without guessing URLs. The endpoint's contract is
+//                       src/lib/ask-api.ts, shared with the function itself.
 //
 // Runs before every `bun run build` and `bun run dev`; none of the files is
 // committed. `bun run llms` runs it on its own.
@@ -21,6 +23,8 @@ import { fileURLToPath } from "node:url";
 import { resume } from "@/content/resume";
 import { companies } from "@/content/work";
 import { writing } from "@/content/writing";
+import { ASK_EFFECTS_SCHEMA, ASK_EVENTS, ASK_PATH, ASK_PROBLEMS, ASK_PROBLEM_SCHEMA, ASK_REQUEST_SCHEMA } from "@/lib/ask-api";
+import { MAX_QUESTION_LENGTH } from "@/lib/ask";
 import { CONTACT_EMAIL, PROFILES, RESUME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { companyViews, monthLabel } from "@/lib/work";
 
@@ -54,8 +58,14 @@ const markdown = [
   ...PROFILES.map((profile) => `- ${profile.name}: ${profile.url}`),
   `- Resume (PDF): ${resumeUrl}`,
   `- Resume (JSON, jsonresume.org schema): ${SITE_URL}/resume.json`,
-  `- OpenAPI description of every file here (read-only, no authentication): ${SITE_URL}/openapi.json`,
+  `- OpenAPI description of every file here and of the question endpoint (no authentication): ${SITE_URL}/openapi.json`,
   `- Sitemap: ${SITE_URL}/sitemap.xml`,
+  "",
+  "## Asking a question",
+  "",
+  `- POST ${SITE_URL}${ASK_PATH} with a JSON body \`{"question": "…"}\` (up to ${MAX_QUESTION_LENGTH} characters). The answer comes from a Claude agent grounded on this document and the pages it links to.`,
+  "- The response is a stream of server-sent events: `delta` (text as it is written), `message` (a finished message), `done` (`{sessionId, backend}`) or `error` (an RFC 9457 problem document). Send `sessionId` back with the next question to keep the thread.",
+  "- Limits: 5 questions a minute per address. Errors before the stream are problem documents with a stable `code`; every code is listed in the OpenAPI description.",
   "",
   "## Work Experience",
   "",
@@ -305,15 +315,55 @@ const openapi = {
     summary: "The machine-readable resources of michaelcohen.io, a personal site.",
     description: [
       `${SITE_DESCRIPTION} The site is a single page; these are the files on it that an agent can fetch directly.`,
-      "All operations are unauthenticated GET requests answered from a CDN; there are no rate limits beyond the host's, no write operations and no other endpoints.",
+      "The files are unauthenticated GET requests answered from a CDN, with no rate limits beyond the host's. The one endpoint, POST /api/ask, asks a Claude agent a question about the site's subject and streams the answer; it is rate limited and has no other side effect.",
       "The resume PDF is not indexed by search engines (X-Robots-Tag: noindex) but may be fetched freely.",
     ].join(" "),
     contact: { name: SITE_NAME, url: `${SITE_URL}/`, email: CONTACT_EMAIL },
   },
   externalDocs: { description: "llms.txt: what the site is for and where each thing lives", url: `${SITE_URL}/llms.txt` },
   servers: [{ url: SITE_URL, description: "Production (the only host; other hostnames redirect here)" }],
-  tags: [{ name: "site", description: "Read-only resources generated from the site's content at build time" }],
+  tags: [
+    { name: "site", description: "Read-only resources generated from the site's content at build time" },
+    { name: "ask", description: "The one endpoint: a question to a Claude agent grounded on the site" },
+  ],
   paths: {
+    [ASK_PATH]: {
+      post: {
+        operationId: "ask",
+        tags: ["ask"],
+        summary: "Ask a question about Michael",
+        description: [
+          "Sends one question to a Claude agent (Claude Managed Agents) grounded on the site's Markdown and the pages it links to, and streams the answer back as server-sent events.",
+          "Each event is `event: <type>` followed by `data: <JSON>`:",
+          ...Object.entries(ASK_EVENTS).map(([type, what]) => `- \`${type}\`: ${what}`),
+          "A follow-up sends the `sessionId` from `done` back in the body to keep the thread. The `party` and `runs` fields exist for the site's own page (Party Mode) and can be left out.",
+          `Rate limited to 5 questions a minute per address. Anything wrong with the request itself is a problem document with its own status, before any stream starts; every code: ${Object.entries(ASK_PROBLEMS).map(([code, p]) => `\`${code}\` (${p.status}, ${p.when})`).join("; ")}.`,
+        ].join("\n"),
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/AskRequest" } } } },
+        responses: {
+          "200": {
+            description: "The answer, as a stream of server-sent events (see the description).",
+            headers: { "Cache-Control": { schema: { type: "string", enum: ["no-store"] } } },
+            content: { "text/event-stream": { schema: { type: "string", description: "Server-sent events; each `data` line is JSON with a `type` field." } } },
+          },
+          ...Object.fromEntries(
+            [...new Set(Object.values(ASK_PROBLEMS).map((p) => p.status))]
+              .filter((status) => status < 500 || status === 503)
+              .sort()
+              .map((status) => [
+                String(status),
+                {
+                  description: Object.entries(ASK_PROBLEMS)
+                    .filter(([, p]) => p.status === status && !p.when.includes("`error` event"))
+                    .map(([code, p]) => `\`${code}\`: ${p.when}`)
+                    .join(" "),
+                  content: { "application/problem+json": { schema: { $ref: "#/components/schemas/AskProblem" } } },
+                },
+              ]),
+          ),
+        },
+      },
+    },
     "/": operation(
       "getHome",
       "The home page",
@@ -396,11 +446,17 @@ const openapi = {
     ),
   },
   components: {
-    schemas: { Problem: problemSchema, JsonResume: resumeJsonSchema },
+    schemas: {
+      Problem: problemSchema,
+      JsonResume: resumeJsonSchema,
+      AskRequest: ASK_REQUEST_SCHEMA,
+      AskProblem: ASK_PROBLEM_SCHEMA,
+      PartyEffects: ASK_EFFECTS_SCHEMA,
+    },
     responses: { NotFound: notFound },
   },
 };
-for (const item of Object.values(openapi.paths)) Object.assign(item.get, { tags: ["site"] });
+for (const item of Object.values(openapi.paths)) if ("get" in item) Object.assign(item.get, { tags: ["site"] });
 
 const openapiJson = `${JSON.stringify(openapi, null, 2)}\n`;
 

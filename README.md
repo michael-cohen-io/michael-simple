@@ -48,7 +48,17 @@ To turn it on, set these in the Vercel project (Settings, Environment Variables)
 | `ASK_ENVIRONMENT_ID`, `ASK_AGENT_ID` | Optional. Printed by `bun scripts/ask-setup.ts` (run once, locally, with the key set); with both present the box runs on Managed Agents. The agent's model and prompt live in `src/lib/ask.ts` and its tools in the script; after changing either, or adding a link to the page, `ASK_AGENT_ID=… ASK_ENVIRONMENT_ID=… bun scripts/ask-setup.ts update` publishes a new version of the same agent (and the environment's egress list), which new sessions pick up. |
 | `ASK_WORKSPACE` | Optional. The workspace the key belongs to, for the Console link the function logs when it opens a session; defaults to `default`. |
 
-Limits: 300-character questions, five a minute per address and 400 a day per function instance, and a $1 cap per agent session (a session that reaches it is dropped and the next question starts a fresh one). The per-address limit is in memory, so it holds per instance; a [Vercel Firewall](https://vercel.com/docs/vercel-firewall) rate-limit rule on `/api/ask` is the durable version.
+Limits: 300-character questions, 5 a minute per address and 400 a day per function instance, and a $1 cap per agent session (a session that reaches it is dropped and the next question starts a fresh one). The per-address limit is in memory, so it holds per instance and resets whenever Vercel starts a new one; the two durable limits below are the ones that actually bound the bill.
+
+### Durable limits (do these before linking the box anywhere)
+
+1. **Vercel Firewall rate limit on `/api/ask`.** Project → Firewall → Configure → Add Rule: condition *Request Path equals `/api/ask`*; action *Rate Limit*: 5 requests per 60 seconds keyed by IP address, then *Deny* for the rest of the window; save and publish. Add a second rule for the whole path with a wider key (no key, or JA4) at about 300 requests per hour, so a distributed burst is capped too. Rate-limit rules need a Pro plan; on Hobby, the fallback is a *Deny* rule on the path that you toggle on if traffic spikes.
+2. **Anthropic spend limit.** In the Console, Settings → Limits: set a monthly spend limit on the workspace the `ANTHROPIC_API_KEY` belongs to (a dedicated workspace for this site keeps the limit small and the trace list clean). Each session is already capped at $1 by the function; the workspace limit caps the number of sessions a bad day can start.
+3. **Watch it.** The runtime logs carry one `ask_session` line per session (with its Console trace link) and one `ask_failed` line per failure; the Console's session list shows tokens and cost per session.
+
+### Keeping the API description honest
+
+`public/openapi.json` and `public/llms.txt` describe `POST /api/ask` from the same source the function is built from: `src/lib/ask-api.ts` holds the request schema, the event types and every problem code with its status and title, the function's `problem()` accepts only those codes, and `scripts/build-llms.tsx` documents exactly that set. `scripts/check-paths.ts` (postbuild) then fails the build if a function path is missing from `openapi.json`, if a documented path does not exist, or if the documented methods differ from the ones the function exports. A new endpoint therefore means: add it to `FUNCTION_PATHS` in `middleware.ts`, to `FUNCTION_METHODS` in `scripts/check-paths.ts`, and to `scripts/build-llms.tsx`, with its contract in `src/lib/`.
 
 ## Checks
 

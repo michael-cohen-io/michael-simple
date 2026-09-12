@@ -23,6 +23,7 @@ import path from "node:path";
 
 import Anthropic from "@anthropic-ai/sdk";
 
+import { ASK_PROBLEMS, type AskProblemCode } from "../src/lib/ask-api.js";
 import { askAgent, askModel, type AskEvent } from "../src/lib/ask-stream.js";
 import { MAX_QUESTION_LENGTH } from "../src/lib/ask.js";
 import { validateEffects, validateRuns } from "../src/lib/party.js";
@@ -37,15 +38,19 @@ const recent = new Map<string, number[]>();
 let answeredToday = 0;
 let day = new Date().toISOString().slice(0, 10);
 
-type ProblemBody = { type: "about:blank"; title: string; status: number; detail: string; code: string };
+type ProblemBody = { type: "about:blank"; title: string; status: number; detail: string; code: AskProblemCode };
 
-function problemBody(status: number, title: string, detail: string, code: string): ProblemBody {
+// Status and title come from the contract (src/lib/ask-api.ts), which is
+// also what openapi.json documents; only the detail is written here.
+function problemBody(code: AskProblemCode, detail: string): ProblemBody {
+  const { status, title } = ASK_PROBLEMS[code];
   return { type: "about:blank", title, status, detail, code };
 }
 
-function problem(status: number, title: string, detail: string, code: string): Response {
-  return new Response(JSON.stringify(problemBody(status, title, detail, code)), {
-    status,
+function problem(code: AskProblemCode, detail: string): Response {
+  const body = problemBody(code, detail);
+  return new Response(JSON.stringify(body), {
+    status: body.status,
     headers: { "content-type": "application/problem+json", "cache-control": "no-store" },
   });
 }
@@ -81,11 +86,11 @@ async function context(): Promise<string> {
 /** The problem document for a failure after the stream has started. */
 function upstreamProblem(error: unknown): ProblemBody {
   if (error instanceof Anthropic.RateLimitError) {
-    return problemBody(503, "Busy", "The agent is busy; try again in a moment.", "upstream_rate_limited");
+    return problemBody("upstream_rate_limited", "The agent is busy; try again in a moment.");
   }
   const detail = error instanceof Error ? error.message : "Unknown error";
   console.error(JSON.stringify({ event: "ask_failed", detail }));
-  return problemBody(502, "No Answer", "The agent could not answer; try again.", "upstream_failed");
+  return problemBody("upstream_failed", "The agent could not answer; try again.");
 }
 
 /** The events as a server-sent-events body: `event: <type>` then the JSON. */
@@ -124,32 +129,32 @@ export async function POST(request: Request): Promise<Response> {
   try {
     body = (await request.json()) as typeof body;
   } catch {
-    return problem(400, "Bad Request", "Send a JSON body with a `question` string.", "invalid_body");
+    return problem("invalid_body", "Send a JSON body with a `question` string.");
   }
   const question = typeof body.question === "string" ? body.question.trim() : "";
-  if (!question) return problem(400, "Bad Request", "`question` must be a non-empty string.", "missing_question");
+  if (!question) return problem("missing_question", "`question` must be a non-empty string.");
   if (question.length > MAX_QUESTION_LENGTH) {
-    return problem(400, "Bad Request", `Keep the question under ${MAX_QUESTION_LENGTH} characters.`, "question_too_long");
+    return problem("question_too_long", `Keep the question under ${MAX_QUESTION_LENGTH} characters.`);
   }
   const sessionId =
     typeof body.sessionId === "string" && /^sesn_[A-Za-z0-9_-]+$/.test(body.sessionId) ? body.sessionId : null;
   // What Party Mode has active in this browser, so the agent's tool result
   // reports the true state (the visitor may have switched it off locally).
   const checkedParty = body.party === undefined ? { effects: {} } : validateEffects(body.party);
-  if ("error" in checkedParty) return problem(400, "Bad Request", `party: ${checkedParty.error}`, "invalid_party");
+  if ("error" in checkedParty) return problem("invalid_party", `party: ${checkedParty.error}`);
   const party = checkedParty.effects;
   // The page's visible text runs, for the tool's list_text step.
   const checkedRuns = validateRuns(body.runs);
-  if ("error" in checkedRuns) return problem(400, "Bad Request", checkedRuns.error, "invalid_runs");
+  if ("error" in checkedRuns) return problem("invalid_runs", checkedRuns.error);
   const runs = checkedRuns.runs;
 
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allow(address)) {
-    return problem(429, "Too Many Requests", "Slow down a little: 5 questions a minute. Try again shortly.", "rate_limited");
+    return problem("rate_limited", "Slow down a little: 5 questions a minute. Try again shortly.");
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return problem(503, "Not Configured", "Asking is not set up on this deployment yet.", "not_configured");
+    return problem("not_configured", "Asking is not set up on this deployment yet.");
   }
   const client = new Anthropic({ timeout: DEADLINE_MS, maxRetries: 1 });
   const agentId = process.env.ASK_AGENT_ID;
@@ -191,5 +196,5 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 export function GET(): Response {
-  return problem(405, "Method Not Allowed", "POST a JSON body with a `question`.", "method_not_allowed");
+  return problem("method_not_allowed", "POST a JSON body with a `question`.");
 }
