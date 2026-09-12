@@ -113,6 +113,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Grayscale antialiasing in both themes: macOS otherwise renders light
+       text on dark heavier than dark on light, and the switch looks like a
+       change of weight. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   /* Headings break evenly across lines; dates line up digit for digit. */
   h1,
